@@ -60,6 +60,8 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
  * -- Insert your external function declaration here --
  */
 /* USER CODE BEGIN 1 */
+uint8_t test = 5;
+
 
 /* USER CODE END 1 */
 
