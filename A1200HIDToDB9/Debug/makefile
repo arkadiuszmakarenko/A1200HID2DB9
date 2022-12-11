@@ -12,7 +12,6 @@ RM := rm -rf
 -include USB_HOST/Target/subdir.mk
 -include USB_HOST/App/subdir.mk
 -include Middlewares/ST/STM32_USB_Host_Library/Core/Src/subdir.mk
--include Middlewares/ST/STM32_USB_Host_Library/Class/HUB/Src/subdir.mk
 -include Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/subdir.mk
 -include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
@@ -65,8 +64,8 @@ all: main-build
 main-build: A1200HIDToDB9.elf secondary-outputs
 
 # Tool invocations
-A1200HIDToDB9.elf: $(OBJS) $(USER_OBJS) C:\stm32Workspace\A1200HIDToDB9\A1200HIDToDB9\STM32F401RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "A1200HIDToDB9.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\stm32Workspace\A1200HIDToDB9\A1200HIDToDB9\STM32F401RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="A1200HIDToDB9.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+A1200HIDToDB9.elf: $(OBJS) $(USER_OBJS) C:\Repo\A1200HID2DB9\A1200HIDToDB9\STM32F401RBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "A1200HIDToDB9.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Repo\A1200HID2DB9\A1200HIDToDB9\STM32F401RBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="A1200HIDToDB9.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

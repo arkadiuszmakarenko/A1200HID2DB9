@@ -34,7 +34,6 @@
 "./Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/usbh_hid_mouse.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/usbh_hid_parser.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/usbh_hid_reportparser.o"
-"./Middlewares/ST/STM32_USB_Host_Library/Class/HUB/Src/usbh_hub.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.o"
 "./Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ioreq.o"
