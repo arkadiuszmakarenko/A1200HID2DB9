@@ -29,12 +29,18 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
+
+void delay_us (uint16_t us);
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 extern void ProcessMouse();
 extern void ProcessJoystick();
 extern void ProcessX_IRQ();
 extern void ProcessY_IRQ();
+extern void amikb_process_irq();
+extern void amikb_process();
+extern void amikb_init();
 
 /* USER CODE END Includes */
 
@@ -77,6 +83,13 @@ void Error_Handler(void);
 #define BH_GPIO_Port GPIOB
 #define FV_Pin GPIO_PIN_7
 #define FV_GPIO_Port GPIOB
+#define KBD_DATA_GPIO_Port GPIOC
+#define KBD_DATA_Pin GPIO_PIN_12
+#define KBD_CLOCK_GPIO_Port GPIOC
+#define KBD_CLOCK_Pin GPIO_PIN_3
+#define KB_RESET_GPIO_Port GPIOC
+#define KB_RESET_GPIO_Pin GPIO_PIN_15
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

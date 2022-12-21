@@ -34,6 +34,8 @@ extern "C" {
 
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim4;
+extern TIM_HandleTypeDef htim11;
 
 /* USER CODE BEGIN Private defines */
 extern volatile int8_t mouseDirectionX;		// X direction (0 = decrement, 1 = increment)
@@ -49,6 +51,8 @@ extern volatile uint8_t yTimerTop;				// Y axis timer TOP value
 
 void MX_TIM2_Init(void);
 void MX_TIM3_Init(void);
+void MX_TIM4_Init(void);
+void MX_TIM11_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 

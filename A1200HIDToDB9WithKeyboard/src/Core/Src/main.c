@@ -7,8 +7,14 @@
 void SystemClock_Config(void);
 void MX_USB_HOST_Process(void);
 
+
+
+
+
 int main(void)
 {
+
+
 
   HAL_Init();
   SystemClock_Config();
@@ -17,9 +23,16 @@ int main(void)
   MX_USB_HOST_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
+  MX_TIM11_Init();
 
   HAL_TIM_Base_Start_IT(&htim2) ;
   HAL_TIM_Base_Start_IT(&htim3) ; 
+  HAL_TIM_Base_Start_IT(&htim4) ; 
+  HAL_TIM_Base_Start(&htim11) ; 
+
+  amikb_init();
+
 
 
 
@@ -28,15 +41,28 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-   // MX_USB_HOST_Process();
+    MX_USB_HOST_Process();
 
 
-   // ProcessMouse();
-   // ProcessJoystick();
-                                                                                                                                                                                     
+    ProcessMouse();
+    ProcessJoystick();
+    amikb_process();
+
+
+
+
    }
 
-}                                                   
+}    
+
+
+
+void delay_us (uint16_t us)
+{
+	__HAL_TIM_SET_COUNTER(&htim11,0);  // set the counter value a 0
+	while (__HAL_TIM_GET_COUNTER(&htim11) < us);  // wait for the counter to reach the us input in the parameter
+}
+
 
 /**
   * @brief System Clock Configuration
@@ -102,13 +128,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
   if (htim->Instance == TIM2) {
    ProcessX_IRQ();
+
   }
 
   if (htim->Instance == TIM3) {
 	  ProcessY_IRQ();
   }
 
-  /* USER CODE END Callback 1 */
+    if (htim->Instance == TIM4) {
+	  amikb_process_irq();
+  }
+
 }
 
 /**
