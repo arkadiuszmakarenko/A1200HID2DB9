@@ -23,6 +23,7 @@
 #include "usb_host.h"
 #include "usbh_core.h"
 #include "usbh_hid.h"
+#include "usbh_hub.h"
 
 /* USER CODE BEGIN Includes */
 HID_MOUSE_Info_TypeDef* mouse;
@@ -82,6 +83,13 @@ void MX_USB_HOST_Init(void)
   {
     Error_Handler();
   }
+
+    if (USBH_RegisterClass(&hUsbHostFS, USBH_HUB_CLASS) != USBH_OK)
+  {
+    Error_Handler();
+  }
+
+
   if (USBH_Start(&hUsbHostFS) != USBH_OK)
   {
     Error_Handler();
