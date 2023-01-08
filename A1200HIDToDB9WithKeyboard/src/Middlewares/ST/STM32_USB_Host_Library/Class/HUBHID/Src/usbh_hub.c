@@ -149,23 +149,57 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost)
 
         if (USBH_HUB_GetDescriptor(phost) == USBH_OK)
         {
-                //we are in. parse descriptor
-
-            HUB_Handle->ctl_state =  HUB_REQ_SET_POWER ;
+            USBH_HUB_ParseHubDescriptor(&HUB_Handle->HUB_Desc,phost->device.Data);
+            HUB_Handle->ctl_state = HUB_REQ_SET_POWER_PORT1 ;
         }
-    break;
 
-	case HUB_REQ_SET_POWER:
+      break;
 
-    default:
+	  case HUB_REQ_SET_POWER_PORT1:
+
+      if(USBH_HUB_SetPortFeature(phost,HUB_FEAT_SEL_PORT_POWER,1) == USBH_OK)
+      {
+        HUB_Handle->ctl_state = HUB_REQ_SET_POWER_PORT2 ;
+      }
+
+      break;
+  
+	  case HUB_REQ_SET_POWER_PORT2:
+
+      if(USBH_HUB_SetPortFeature(phost,HUB_FEAT_SEL_PORT_POWER,2) == USBH_OK)
+      {
+        HUB_Handle->ctl_state = HUB_REQ_SET_POWER_PORT3 ;
+      }
+
+      break;
+
+  	case HUB_REQ_SET_POWER_PORT3:
+
+      if(USBH_HUB_SetPortFeature(phost,HUB_FEAT_SEL_PORT_POWER,3) == USBH_OK)
+      {
+        HUB_Handle->ctl_state = HUB_REQ_SET_POWER_PORT4;
+      }
+
     break;
+  
+  	case HUB_REQ_SET_POWER_PORT4:
+      if(USBH_HUB_SetPortFeature(phost,HUB_FEAT_SEL_PORT_POWER,4) == USBH_OK)
+      {
+        HUB_Handle->ctl_state = HUB_WAIT_PWRGOOD ;
+      }
+      break;
+
+   	case HUB_WAIT_PWRGOOD:  
+      HAL_Delay(HUB_Handle->HUB_Desc.bPwrOn2PwrGood);
+      HUB_Handle->ctl_state = HUB_REQ_DONE;
+      break;
+
+    case HUB_REQ_DONE:
+      status = USBH_OK;
+      break;
 
   }
 
-
-
-
-	
 	return status;
 }
 
@@ -177,7 +211,8 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 	
 
 	return status;
-}
+
+   }
 
 static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
 {
@@ -193,22 +228,114 @@ static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
 
 USBH_StatusTypeDef USBH_HUB_GetDescriptor(USBH_HandleTypeDef *phost)
 {
-
-     // USBH_StatusTypeDef status;
-    HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
-      uint16_t lenght = sizeof(HUB_DescTypeDef);
+  uint16_t lenght = sizeof(HUB_DescTypeDef);
 
   if (phost->RequestState == CMD_SEND)
   {
     phost->Control.setup.b.bmRequestType = 0b10100000;
     phost->Control.setup.b.bRequest = USB_REQ_GET_DESCRIPTOR;		
     phost->Control.setup.b.wValue.bw.msb = 0;
-	phost->Control.setup.b.wValue.bw.lsb = 0x29;
+	  phost->Control.setup.b.wValue.bw.lsb = 0x29;
     phost->Control.setup.b.wIndex.w = 0;
     phost->Control.setup.b.wLength.w = lenght;
   }
 
-  return USBH_CtlReq(phost, HUB_Handle->buffer, lenght);
+  return USBH_CtlReq(phost, phost->device.Data, lenght) ;
+}
 
+void USBH_HUB_GetHUBStatus(USBH_HandleTypeDef *phost)
+{
+      HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
+
+
+  if (phost->RequestState == CMD_SEND)
+  {
+    phost->Control.setup.b.bmRequestType = 0b10100000;
+    phost->Control.setup.b.bRequest = USB_REQUEST_GET_STATUS;		
+    phost->Control.setup.b.wValue.w = 0;
+    phost->Control.setup.b.wIndex.w = 0;
+    phost->Control.setup.b.wLength.w = 4;
+  }
+
+  while (USBH_CtlReq(phost, phost->device.Data, 4) != USBH_OK);
+
+  USBH_HUB_ParseHUBStatus(HUB_Handle,phost->device.Data);
+}
+
+
+void USBH_HUB_GetPortStatus(USBH_HandleTypeDef *phost, uint8_t PortNum)
+{
+  HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
+
+  
+	phost->Control.setup.b.bmRequestType = 0b10100011;
+	phost->Control.setup.b.bRequest  	 = USB_REQUEST_GET_STATUS;
+	phost->Control.setup.b.wValue.bw.msb = HUB_FEAT_SEL_PORT_CONN;
+	phost->Control.setup.b.wValue.bw.lsb = 0;
+	phost->Control.setup.b.wIndex.bw.msb = PortNum;
+  phost->Control.setup.b.wIndex.bw.lsb = 0;
+	phost->Control.setup.b.wLength.w     =  4;
+  
+	
+  while(USBH_CtlReq(phost, phost->device.Data, 4) != USBH_OK);
+
+  USBH_HUB_ParsePortStatus(HUB_Handle,phost->device.Data,PortNum-1);
 
 }
+
+
+
+USBH_StatusTypeDef USBH_HUB_SetPortFeature(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum)
+{
+
+  if (phost->RequestState == CMD_SEND)
+  {
+    phost->Control.setup.b.bmRequestType = 0b00100011; 
+    phost->Control.setup.b.bRequest = USB_REQUEST_SET_FEATURE;		
+    phost->Control.setup.b.wValue.bw.msb = feature;
+	  phost->Control.setup.b.wValue.bw.lsb = 0x0;
+    phost->Control.setup.b.wIndex.bw.msb = PortNum;
+    phost->Control.setup.b.wIndex.bw.lsb = 0x0;
+    phost->Control.setup.b.wLength.w = 0;
+  }
+   return USBH_CtlReq(phost, 0, 0);
+}
+
+
+
+
+
+
+void  USBH_HUB_ParseHubDescriptor(HUB_DescTypeDef  *hub_descriptor,
+                              uint8_t *buf)
+{
+  hub_descriptor->bDescLength         = *(uint8_t *)(buf + 0);
+  hub_descriptor->bDescriptorType     = *(uint8_t *)(buf + 1);
+  hub_descriptor->bNbrPorts           = *(uint8_t *)(buf + 2);
+  hub_descriptor->wHubCharacteristics = LE16(buf + 3);
+  hub_descriptor->bPwrOn2PwrGood      = *(uint8_t *)(buf + 5);
+  hub_descriptor->bHubContrCurrent    = *(uint8_t *)(buf + 6);
+  hub_descriptor->DeviceRemovable     = *(uint8_t *)(buf + 7);
+  hub_descriptor->PortPwrCtrlMask     = *(uint8_t *)(buf + 8);
+
+}
+
+
+void  USBH_HUB_ParseHUBStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf)
+{
+  HUB_Handle->HubStatus[0]         = *(uint8_t *)(buf + 0);
+  HUB_Handle->HubStatus[1]         = *(uint8_t *)(buf + 1);
+  HUB_Handle->HubStatus[2]         = *(uint8_t *)(buf + 2);
+  HUB_Handle->HubStatus[3]         = *(uint8_t *)(buf + 3);
+}
+
+ void  USBH_HUB_ParsePortStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf,uint8_t PortNum)
+{
+  HUB_Handle->PortStatus[PortNum][0]         = *(uint8_t *)(buf + 0);
+  HUB_Handle->PortStatus[PortNum][1]         = *(uint8_t *)(buf + 1);
+  HUB_Handle->PortStatus[PortNum][2]         = *(uint8_t *)(buf + 2);
+  HUB_Handle->PortStatus[PortNum][3]         = *(uint8_t *)(buf + 3);
+}
+
+
+
