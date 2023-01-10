@@ -114,6 +114,17 @@ USBH_StatusTypeDef USBH_SetFeature(USBH_HandleTypeDef *phost, uint8_t wValue);
 USBH_StatusTypeDef USBH_ClrFeature(USBH_HandleTypeDef *phost, uint8_t ep_num);
 
 USBH_DescHeader_t *USBH_GetNextDesc(uint8_t *pbuf, uint16_t *ptr);
+
+
+void USBH_ParseDevDesc(USBH_DevDescTypeDef *dev_desc,
+                              uint8_t *buf, uint16_t length);
+
+void USBH_ParseCfgDesc(USBH_CfgDescTypeDef *cfg_desc,
+                              uint8_t *buf, uint16_t length);
+
+void USBH_ParseEPDesc(USBH_EpDescTypeDef  *ep_descriptor, uint8_t *buf);
+void USBH_ParseStringDesc(uint8_t *psrc, uint8_t *pdest, uint16_t length);
+void USBH_ParseInterfaceDesc(USBH_InterfaceDescTypeDef  *if_descriptor, uint8_t *buf);
 /**
   * @}
   */

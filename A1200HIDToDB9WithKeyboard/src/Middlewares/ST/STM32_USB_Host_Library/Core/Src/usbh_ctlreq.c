@@ -71,15 +71,7 @@
 */
 static USBH_StatusTypeDef USBH_HandleControl(USBH_HandleTypeDef *phost);
 
-static void USBH_ParseDevDesc(USBH_DevDescTypeDef *dev_desc,
-                              uint8_t *buf, uint16_t length);
 
-static void USBH_ParseCfgDesc(USBH_CfgDescTypeDef *cfg_desc,
-                              uint8_t *buf, uint16_t length);
-
-static void USBH_ParseEPDesc(USBH_EpDescTypeDef  *ep_descriptor, uint8_t *buf);
-static void USBH_ParseStringDesc(uint8_t *psrc, uint8_t *pdest, uint16_t length);
-static void USBH_ParseInterfaceDesc(USBH_InterfaceDescTypeDef  *if_descriptor, uint8_t *buf);
 
 
 /**
@@ -345,7 +337,7 @@ USBH_StatusTypeDef USBH_ClrFeature(USBH_HandleTypeDef *phost, uint8_t ep_num)
   * @param  length: Length of the descriptor
   * @retval None
   */
-static void  USBH_ParseDevDesc(USBH_DevDescTypeDef *dev_desc, uint8_t *buf,
+void  USBH_ParseDevDesc(USBH_DevDescTypeDef *dev_desc, uint8_t *buf,
                                uint16_t length)
 {
   dev_desc->bLength            = *(uint8_t *)(buf +  0);
@@ -379,7 +371,7 @@ static void  USBH_ParseDevDesc(USBH_DevDescTypeDef *dev_desc, uint8_t *buf,
   * @param  length: Length of the descriptor
   * @retval None
   */
-static void USBH_ParseCfgDesc(USBH_CfgDescTypeDef *cfg_desc, uint8_t *buf,
+void USBH_ParseCfgDesc(USBH_CfgDescTypeDef *cfg_desc, uint8_t *buf,
                               uint16_t length)
 {
   USBH_InterfaceDescTypeDef    *pif ;
@@ -440,7 +432,7 @@ static void USBH_ParseCfgDesc(USBH_CfgDescTypeDef *cfg_desc, uint8_t *buf,
   * @param  buf: Buffer where the descriptor data is available
   * @retval None
   */
-static void  USBH_ParseInterfaceDesc(USBH_InterfaceDescTypeDef *if_descriptor,
+void  USBH_ParseInterfaceDesc(USBH_InterfaceDescTypeDef *if_descriptor,
                                      uint8_t *buf)
 {
   if_descriptor->bLength            = *(uint8_t *)(buf + 0);
@@ -462,7 +454,7 @@ static void  USBH_ParseInterfaceDesc(USBH_InterfaceDescTypeDef *if_descriptor,
   * @param  buf: Buffer where the parsed descriptor stored
   * @retval None
   */
-static void  USBH_ParseEPDesc(USBH_EpDescTypeDef  *ep_descriptor,
+void  USBH_ParseEPDesc(USBH_EpDescTypeDef  *ep_descriptor,
                               uint8_t *buf)
 {
   ep_descriptor->bLength          = *(uint8_t *)(buf + 0);
@@ -482,7 +474,7 @@ static void  USBH_ParseEPDesc(USBH_EpDescTypeDef  *ep_descriptor,
   * @param  length: Length of the descriptor
   * @retval None
   */
-static void USBH_ParseStringDesc(uint8_t *psrc, uint8_t *pdest, uint16_t length)
+void USBH_ParseStringDesc(uint8_t *psrc, uint8_t *pdest, uint16_t length)
 {
   uint16_t strlength;
   uint16_t idx;

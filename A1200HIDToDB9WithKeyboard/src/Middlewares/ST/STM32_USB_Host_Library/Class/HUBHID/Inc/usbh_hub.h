@@ -9,42 +9,10 @@
 #define USB_HUB_CLASS     					 0x09
 #define HUB_MIN_POLL                         10U
 
-#define MAX_HUB_PORTS 						 4
-
-
-#define USB_REQUEST_GET_DESCRIPTOR           0x06
-
-#define USB_DEVICE_REQUEST_SET   			 0x00
-#define USB_DEVICE_REQUEST_GET   			 0x01
-#define USB_REQUEST_CLEAR_FEATURE   		 0x01
-#define USB_REQUEST_SET_FEATURE     		 0x03
-#define USB_REQUEST_GET_STATUS          	 0x00
-
-#define HUB_FEAT_SEL_PORT_CONNECTION 		 0x00
-#define HUB_FEAT_SEL_C_HUB_LOCAL_POWER       0x00
-#define HUB_FEAT_SEL_C_HUB_OVER_CURRENT      0x01
-
-#define HUB_FEAT_SEL_PORT_CONN         		 0x00
-#define HUB_FEAT_SEL_PORT_ENABLE             0x01
-#define HUB_FEAT_SEL_PORT_SUSPEND            0x02
-#define HUB_FEAT_SEL_PORT_OVER_CURRENT       0x03
-#define HUB_FEAT_SEL_PORT_RESET              0x04
-#define HUB_FEAT_SEL_PORT_POWER              0x08
-#define HUB_FEAT_SEL_PORT_LOW_SPEED          0x09
-#define HUB_FEAT_SEL_C_PORT_CONNECTION       0x10
-#define HUB_FEAT_SEL_C_PORT_ENABLE           0x11
-#define HUB_FEAT_SEL_C_PORT_SUSPEND          0x12
-#define HUB_FEAT_SEL_C_PORT_OVER_CURRENT     0x13
-#define HUB_FEAT_SEL_C_PORT_RESET            0x14
-#define HUB_FEAT_SEL_PORT_INDICATOR          0x16
 
 
 extern USBH_ClassTypeDef  HUB_Class;
 #define USBH_HUB_CLASS    &HUB_Class
-
-
-
-
 
 /* States for HUB State Machine */
 
@@ -53,6 +21,11 @@ typedef enum
 {
   HUB_INIT = 0,
   HUB_IDLE,
+  HUB_INIT_PORT1,
+  HUB_ENUM_PORT1,
+  HUB_CHECK,
+
+
 
 }
 HUB_StateTypeDef;
@@ -88,39 +61,6 @@ typedef struct _HUBDescriptor
   uint8_t  PortPwrCtrlMask;            /* This field exists for reasons of compatibility with software written for 1.0 compliant devices.*/
 }
 HUB_DescTypeDef;
-
-
-
-
-
-
-
-//Hub Handle
-
-
-/* Structure for HUB process */
-typedef struct _HUB_Process
-{
-  uint8_t              OutPipe;
-  uint8_t              InPipe;
-  HUB_StateTypeDef     state;
-  uint8_t              OutEp;
-  uint8_t              InEp;
-  HUB_CtlStateTypeDef  ctl_state;
-  uint8_t              *pData;
-  uint16_t             length;
-  uint8_t              ep_addr;
-  uint16_t             poll;
-  uint32_t             timer;
-  uint8_t              DataReady;
-  HUB_DescTypeDef      HUB_Desc;
-  USBH_StatusTypeDef(* Init)(USBH_HandleTypeDef *phost);
-  uint8_t              HubStatus[4];
-  uint8_t              PortStatus[4][4];
-  uint8_t              buff[20];
-
-}
-HUB_HandleTypeDef;
 
 
 typedef struct __attribute__ ((packed)) _USB_HUB_PORT_STATUS
@@ -167,14 +107,60 @@ typedef struct __attribute__ ((packed)) _USB_HUB_PORT_STATUS
 
 
 
+typedef struct _HUB_Port_Process
+{
+
+  uint8_t                           Pipe_in;
+  uint8_t                           Pipe_out;
+  USBH_DevDescTypeDef               DevDesc;
+  USBH_CfgDescTypeDef               CfgDesc;
+  uint8_t                           buff[256];
+
+}
+HUB_Port_HandleTypeDef;
+
+//Hub Handle
+
+
+/* Structure for HUB process */
+typedef struct _HUB_Process
+{
+  uint8_t              OutPipe;
+  uint8_t              InPipe;
+  HUB_StateTypeDef     state;
+  uint8_t              OutEp;
+  uint8_t              InEp;
+  HUB_CtlStateTypeDef  ctl_state;
+  uint8_t              *pData;
+  uint16_t             length;
+  uint8_t              ep_addr;
+  uint16_t             poll;
+  uint32_t             timer;
+  uint8_t              DataReady;
+  HUB_DescTypeDef      HUB_Desc;
+  USBH_StatusTypeDef(* Init)(USBH_HandleTypeDef *phost);
+  uint8_t              HubStatus[4];
+  USB_HUB_PORT_STATUS  PortStatus[4];
+  uint8_t              buff[256];
+  HUB_Port_HandleTypeDef Port1;
+
+}
+HUB_HandleTypeDef;
+
+
+
+
+
+
+
+
+
 //funct
-USBH_StatusTypeDef USBH_HUB_GetDescriptor(USBH_HandleTypeDef *phost);
-void USBH_HUB_GetHUBStatus(USBH_HandleTypeDef *phost);
-void USBH_HUB_GetPortStatus(USBH_HandleTypeDef *phost, uint8_t PortNum);
-void USBH_HUB_ParseHubDescriptor(HUB_DescTypeDef  *hub_descriptor, uint8_t *buf);
-void USBH_HUB_ParseHUBStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf);
-void USBH_HUB_ParsePortStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf,uint8_t PortNum);
-USBH_StatusTypeDef USBH_HUB_SetPortFeature(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum);
+
+
+
+//static void  USBH_ParseDevDesc(USBH_DevDescTypeDef *dev_desc, uint8_t *buf,
+//                               uint16_t length);
 
 
 #endif /* __USBH_HID_H */

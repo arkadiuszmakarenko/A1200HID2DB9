@@ -1,4 +1,5 @@
 #include "usbh_hub.h"
+#include "usbh_hubctrl.h"
 
 
 static USBH_StatusTypeDef USBH_HUB_InterfaceInit(USBH_HandleTypeDef *phost);
@@ -205,12 +206,109 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost)
 
 static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 {
+
     USBH_StatusTypeDef status = USBH_BUSY;
+    HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
+
+
+    //USBH_HUB_GetPortStatus(phost,1);
+
+    
+
+  
+    //USBH_HUB_GetPortStatus(phost,1);
+
+
+
+   // USBH_HUB_GetDevDescriptor(phost);
+
+
+
+      switch (HUB_Handle->state)
+   {
+    case HUB_REQ_INIT:
+    USBH_HUB_SetPortFeatureBL(phost,HUB_FEAT_SEL_PORT_RESET,1);
+
+     // phost->Control.pipe_out = USBH_AllocPipe(phost, 0x00U);
+     // phost->Control.pipe_in  = USBH_AllocPipe(phost, 0x80U);
+     HUB_Handle->Port1.Pipe_out = USBH_AllocPipe(phost, 0x00U);
+     HUB_Handle->Port1.Pipe_in = USBH_AllocPipe(phost, 0x80U);
+      phost->device.address = 0U;
+      phost->Control.pipe_in = HUB_Handle->Port1.Pipe_in;
+      phost->Control.pipe_out = HUB_Handle->Port1.Pipe_out;
+
+
+
+      /* Open Control pipes */
+      USBH_OpenPipe(phost, HUB_Handle->Port1.Pipe_in, 0x80U,
+                    phost->device.address, phost->device.speed,
+                    USBH_EP_CONTROL, (uint16_t)phost->Control.pipe_size);
+
+      /* Open Control pipes */
+      USBH_OpenPipe(phost, HUB_Handle->Port1.Pipe_out, 0x00U,
+                    phost->device.address, phost->device.speed,
+                    USBH_EP_CONTROL, (uint16_t)phost->Control.pipe_size);
+
+        HUB_Handle->state = HUB_REQ_GET_DESCRIPTOR;
+
+
+  break;
+
+    case HUB_REQ_GET_DESCRIPTOR:
+
+       USBH_HUB_Get_DevDesc(phost, 8U);
+       
+        phost->Control.pipe_size = HUB_Handle->Port1.DevDesc.bMaxPacketSize;
+
+
+
+        /* modify control channels configuration for MaxPacket size */
+        USBH_OpenPipe(phost, HUB_Handle->Port1.Pipe_in, 0x80U, phost->device.address,
+                      phost->device.speed, USBH_EP_CONTROL,
+                      (uint16_t)HUB_Handle->Port1.DevDesc.bMaxPacketSize);
+
+        /* Open Control pipes */
+        USBH_OpenPipe(phost, HUB_Handle->Port1.Pipe_out , 0x00U, phost->device.address,
+                      phost->device.speed, USBH_EP_CONTROL,
+                      (uint16_t)HUB_Handle->Port1.DevDesc.bMaxPacketSize);
+
+        USBH_HUB_Get_DevDesc(phost, USB_DEVICE_DESC_SIZE);
+
+        while (USBH_SetAddress(phost,2) != USBH_OK);
+
+        phost->device.address = 0x02;
+
+                /* modify control channels to update device address */
+        USBH_OpenPipe(phost, HUB_Handle->Port1.Pipe_in, 0x80U,  phost->device.address,
+                      phost->device.speed, USBH_EP_CONTROL,
+                      (uint16_t)phost->Control.pipe_size);
+
+        /* Open Control pipes */
+        USBH_OpenPipe(phost, HUB_Handle->Port1.Pipe_out , 0x00U, phost->device.address,
+                      phost->device.speed, USBH_EP_CONTROL,
+                      (uint16_t)phost->Control.pipe_size);
+
+
+      while(USBH_HUB_Get_CfgDesc(phost,USB_CONFIGURATION_DESC_SIZE)!=USBH_OK);
+
+      while(USBH_HUB_Get_CfgDesc(phost,HUB_Handle->Port1.CfgDesc.wTotalLength)!=USBH_OK);
+
+
+
+    break;
+
+
+   }
+
+
+
+
+
 
 
 	
 
-	return status;
+ 	return status;
 
    }
 
@@ -225,117 +323,6 @@ static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
 }
 
 
-
-USBH_StatusTypeDef USBH_HUB_GetDescriptor(USBH_HandleTypeDef *phost)
-{
-  uint16_t lenght = sizeof(HUB_DescTypeDef);
-
-  if (phost->RequestState == CMD_SEND)
-  {
-    phost->Control.setup.b.bmRequestType = 0b10100000;
-    phost->Control.setup.b.bRequest = USB_REQ_GET_DESCRIPTOR;		
-    phost->Control.setup.b.wValue.bw.msb = 0;
-	  phost->Control.setup.b.wValue.bw.lsb = 0x29;
-    phost->Control.setup.b.wIndex.w = 0;
-    phost->Control.setup.b.wLength.w = lenght;
-  }
-
-  return USBH_CtlReq(phost, phost->device.Data, lenght) ;
-}
-
-void USBH_HUB_GetHUBStatus(USBH_HandleTypeDef *phost)
-{
-      HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
-
-
-  if (phost->RequestState == CMD_SEND)
-  {
-    phost->Control.setup.b.bmRequestType = 0b10100000;
-    phost->Control.setup.b.bRequest = USB_REQUEST_GET_STATUS;		
-    phost->Control.setup.b.wValue.w = 0;
-    phost->Control.setup.b.wIndex.w = 0;
-    phost->Control.setup.b.wLength.w = 4;
-  }
-
-  while (USBH_CtlReq(phost, phost->device.Data, 4) != USBH_OK);
-
-  USBH_HUB_ParseHUBStatus(HUB_Handle,phost->device.Data);
-}
-
-
-void USBH_HUB_GetPortStatus(USBH_HandleTypeDef *phost, uint8_t PortNum)
-{
-  HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
-
-  
-	phost->Control.setup.b.bmRequestType = 0b10100011;
-	phost->Control.setup.b.bRequest  	 = USB_REQUEST_GET_STATUS;
-	phost->Control.setup.b.wValue.bw.msb = HUB_FEAT_SEL_PORT_CONN;
-	phost->Control.setup.b.wValue.bw.lsb = 0;
-	phost->Control.setup.b.wIndex.bw.msb = PortNum;
-  phost->Control.setup.b.wIndex.bw.lsb = 0;
-	phost->Control.setup.b.wLength.w     =  4;
-  
-	
-  while(USBH_CtlReq(phost, phost->device.Data, 4) != USBH_OK);
-
-  USBH_HUB_ParsePortStatus(HUB_Handle,phost->device.Data,PortNum-1);
-
-}
-
-
-
-USBH_StatusTypeDef USBH_HUB_SetPortFeature(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum)
-{
-
-  if (phost->RequestState == CMD_SEND)
-  {
-    phost->Control.setup.b.bmRequestType = 0b00100011; 
-    phost->Control.setup.b.bRequest = USB_REQUEST_SET_FEATURE;		
-    phost->Control.setup.b.wValue.bw.msb = feature;
-	  phost->Control.setup.b.wValue.bw.lsb = 0x0;
-    phost->Control.setup.b.wIndex.bw.msb = PortNum;
-    phost->Control.setup.b.wIndex.bw.lsb = 0x0;
-    phost->Control.setup.b.wLength.w = 0;
-  }
-   return USBH_CtlReq(phost, 0, 0);
-}
-
-
-
-
-
-
-void  USBH_HUB_ParseHubDescriptor(HUB_DescTypeDef  *hub_descriptor,
-                              uint8_t *buf)
-{
-  hub_descriptor->bDescLength         = *(uint8_t *)(buf + 0);
-  hub_descriptor->bDescriptorType     = *(uint8_t *)(buf + 1);
-  hub_descriptor->bNbrPorts           = *(uint8_t *)(buf + 2);
-  hub_descriptor->wHubCharacteristics = LE16(buf + 3);
-  hub_descriptor->bPwrOn2PwrGood      = *(uint8_t *)(buf + 5);
-  hub_descriptor->bHubContrCurrent    = *(uint8_t *)(buf + 6);
-  hub_descriptor->DeviceRemovable     = *(uint8_t *)(buf + 7);
-  hub_descriptor->PortPwrCtrlMask     = *(uint8_t *)(buf + 8);
-
-}
-
-
-void  USBH_HUB_ParseHUBStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf)
-{
-  HUB_Handle->HubStatus[0]         = *(uint8_t *)(buf + 0);
-  HUB_Handle->HubStatus[1]         = *(uint8_t *)(buf + 1);
-  HUB_Handle->HubStatus[2]         = *(uint8_t *)(buf + 2);
-  HUB_Handle->HubStatus[3]         = *(uint8_t *)(buf + 3);
-}
-
- void  USBH_HUB_ParsePortStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf,uint8_t PortNum)
-{
-  HUB_Handle->PortStatus[PortNum][0]         = *(uint8_t *)(buf + 0);
-  HUB_Handle->PortStatus[PortNum][1]         = *(uint8_t *)(buf + 1);
-  HUB_Handle->PortStatus[PortNum][2]         = *(uint8_t *)(buf + 2);
-  HUB_Handle->PortStatus[PortNum][3]         = *(uint8_t *)(buf + 3);
-}
 
 
 
