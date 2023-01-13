@@ -20,13 +20,10 @@ extern USBH_ClassTypeDef  HUB_Class;
 typedef enum
 {
   HUB_INIT = 0,
-  HUB_IDLE,
-  HUB_INIT_PORT1,
-  HUB_ENUM_PORT1,
-  HUB_CHECK,
-
-
-
+  HUB_UPDATE_PORTS_STATUS,
+  HUB_HANDLE_DISCONNECTED_PORTS,
+  HUB_HANDLE_CONNECTED_PORTS,
+  HUB_PROCESS_PORTS
 }
 HUB_StateTypeDef;
 
@@ -42,6 +39,23 @@ typedef enum
 	HUB_REQ_DONE,
 }
 HUB_CtlStateTypeDef;
+
+
+typedef enum
+{
+  HUB_ENUM_IDLE = 0U,
+  HUB_ENUM_RESET_PORT,
+  HUB_ENUM_GET_DEV_DESC,
+  HUB_ENUM_GET_FULL_DEV_DESC,
+  HUB_ENUM_SET_ADDR,
+  HUB_ENUM_GET_CFG_DESC,
+  HUB_ENUM_GET_FULL_CFG_DESC,
+  HUB_ENUM_GET_MFC_STRING_DESC,
+  HUB_ENUM_GET_PRODUCT_STRING_DESC,
+  HUB_ENUM_GET_SERIALNUM_STRING_DESC,
+  HUB_ENUM_READY
+}
+HUB_DEV_ENUMStateTypeDef;
 
 
 
@@ -109,7 +123,10 @@ typedef struct __attribute__ ((packed)) _USB_HUB_PORT_STATUS
 
 typedef struct _HUB_Port_Process
 {
-
+  USB_HUB_PORT_STATUS               PortStatus;
+  uint8_t                           Connected;
+  uint8_t                           Disconnected;
+  HUB_DEV_ENUMStateTypeDef          EnumState;
   uint8_t                           Pipe_in;
   uint8_t                           Pipe_out;
   USBH_DevDescTypeDef               DevDesc;
@@ -140,27 +157,14 @@ typedef struct _HUB_Process
   HUB_DescTypeDef      HUB_Desc;
   USBH_StatusTypeDef(* Init)(USBH_HandleTypeDef *phost);
   uint8_t              HubStatus[4];
-  USB_HUB_PORT_STATUS  PortStatus[4];
   uint8_t              buff[256];
-  HUB_Port_HandleTypeDef Port1;
+  HUB_Port_HandleTypeDef Port[4];
+  uint8_t              PortStatusChangeFlag;
 
 }
 HUB_HandleTypeDef;
 
 
-
-
-
-
-
-
-
-//funct
-
-
-
-//static void  USBH_ParseDevDesc(USBH_DevDescTypeDef *dev_desc, uint8_t *buf,
-//                               uint16_t length);
 
 
 #endif /* __USBH_HID_H */
