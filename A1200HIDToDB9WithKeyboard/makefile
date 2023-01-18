@@ -121,7 +121,7 @@ erase:
 	st-flash erase
 
 write: all
-	st-flash --connect-under-reset write  $(TITLE_NAME).bin 0x8000000
+	st-flash  write  $(TARGETDIR)/$(TITLE_NAME).bin 0x8000000
 
 clean:
 	@echo "Clean"

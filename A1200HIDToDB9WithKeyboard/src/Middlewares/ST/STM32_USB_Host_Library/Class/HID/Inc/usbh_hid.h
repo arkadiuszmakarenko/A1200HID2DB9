@@ -340,6 +340,8 @@ uint16_t  USBH_HID_FifoRead(FIFO_TypeDef *f, void *buf, uint16_t  nbytes);
 
 uint16_t  USBH_HID_FifoWrite(FIFO_TypeDef *f, void *buf, uint16_t nbytes);
 
+void USBH_HID_ParseHIDDesc(HID_DescTypeDef *desc, uint8_t *buf);
+
 /**
   * @}
   */

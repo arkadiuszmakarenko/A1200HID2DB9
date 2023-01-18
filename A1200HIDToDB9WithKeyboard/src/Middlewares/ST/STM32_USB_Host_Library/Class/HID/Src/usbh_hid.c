@@ -97,7 +97,6 @@ static USBH_StatusTypeDef USBH_HID_InterfaceDeInit(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_HID_ClassRequest(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_HID_Process(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_HID_SOFProcess(USBH_HandleTypeDef *phost);
-static void USBH_HID_ParseHIDDesc(HID_DescTypeDef *desc, uint8_t *buf);
 
 extern USBH_StatusTypeDef USBH_HID_MouseInit(USBH_HandleTypeDef *phost);
 extern USBH_StatusTypeDef USBH_HID_KeybdInit(USBH_HandleTypeDef *phost);
@@ -687,7 +686,7 @@ USBH_StatusTypeDef USBH_HID_GetProtocol(USBH_HandleTypeDef *phost,
  * @param  buf: Buffer where the source descriptor is available
  * @retval None
  */
-static void USBH_HID_ParseHIDDesc(HID_DescTypeDef *desc, uint8_t *buf) {
+void USBH_HID_ParseHIDDesc(HID_DescTypeDef *desc, uint8_t *buf) {
 
 	desc->bLength = *(uint8_t*) (buf + 0);
 	desc->bDescriptorType = *(uint8_t*) (buf + 1);

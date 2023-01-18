@@ -5,6 +5,7 @@
 
 #include "usbh_core.h"
 #include "usbh_def.h"
+#include "usbh_hid.h"
 
 #define USB_HUB_CLASS     					 0x09
 #define HUB_MIN_POLL                         10U
@@ -43,8 +44,11 @@ HUB_CtlStateTypeDef;
 
 typedef enum
 {
-  HUB_ENUM_IDLE = 0U,
+  HUB_ENUM_INIT= 0U,
+  HUB_ENUM_CLEAR_POWER_OFF_PORT,
+  HUB_ENUM_CLEAR_POWER_ON_PORT,
   HUB_ENUM_RESET_PORT,
+  HUB_ENUM_CHECK_ENABLE_PORT,
   HUB_ENUM_GET_DEV_DESC,
   HUB_ENUM_GET_FULL_DEV_DESC,
   HUB_ENUM_SET_ADDR,
@@ -52,7 +56,10 @@ typedef enum
   HUB_ENUM_GET_FULL_CFG_DESC,
   HUB_ENUM_GET_MFC_STRING_DESC,
   HUB_ENUM_GET_PRODUCT_STRING_DESC,
-  HUB_ENUM_GET_SERIALNUM_STRING_DESC,
+  HUB_ENUM_GET_HID_DESC,
+  HUB_ENUM_GET_HID_REPORT_DESC,
+  HUB_ENUM_GET_HID_DESC_INTER2,
+  HUB_ENUM_GET_HID_REPORT_DESC_INTER2,
   HUB_ENUM_READY
 }
 HUB_DEV_ENUMStateTypeDef;
@@ -127,11 +134,20 @@ typedef struct _HUB_Port_Process
   uint8_t                           Connected;
   uint8_t                           Disconnected;
   HUB_DEV_ENUMStateTypeDef          EnumState;
+  uint8_t                           DevDescNum;
   uint8_t                           Pipe_in;
   uint8_t                           Pipe_out;
+  uint8_t                           Pipe_size;
+  uint8_t                           address;
+  uint8_t                           speed;
+  uint8_t                           current_interface;
+  uint8_t                           *MFC;
+  uint8_t                           *Product;
   USBH_DevDescTypeDef               DevDesc;
   USBH_CfgDescTypeDef               CfgDesc;
-  uint8_t                           buff[256];
+  HID_DescTypeDef                   HIDDesc;
+  HID_DescTypeDef                   HIDDesc_Inter2;
+  uint8_t                           buff[512];
 
 }
 HUB_Port_HandleTypeDef;
@@ -144,6 +160,8 @@ typedef struct _HUB_Process
 {
   uint8_t              OutPipe;
   uint8_t              InPipe;
+  uint8_t              DevOutPipe;
+  uint8_t              DevInPipe;
   HUB_StateTypeDef     state;
   uint8_t              OutEp;
   uint8_t              InEp;
@@ -160,6 +178,7 @@ typedef struct _HUB_Process
   uint8_t              buff[256];
   HUB_Port_HandleTypeDef Port[4];
   uint8_t              PortStatusChangeFlag;
+  uint8_t              portNumber;
 
 }
 HUB_HandleTypeDef;

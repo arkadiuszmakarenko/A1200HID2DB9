@@ -46,9 +46,12 @@ void USBH_HUB_ParseHubDescriptor(HUB_DescTypeDef  *hub_descriptor, uint8_t *buf)
 void USBH_HUB_ParseHUBStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf);
 void USBH_HUB_ParsePortStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf,HUB_Port_HandleTypeDef *Port);
 USBH_StatusTypeDef USBH_HUB_SetPortFeature(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum);
-void USBH_HUB_SetPortFeatureBL(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum);
 USBH_StatusTypeDef USBH_HUB_ClearPortFeature(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum);
 USBH_StatusTypeDef USBH_HUB_Get_DevDesc(USBH_HandleTypeDef *phost, uint8_t length,HUB_Port_HandleTypeDef *Port);
+USBH_StatusTypeDef USBH_HUB_Get_StringDesc(USBH_HandleTypeDef *phost,uint8_t string_index, uint8_t *buff,uint16_t length, HUB_Port_HandleTypeDef *Port);
+USBH_StatusTypeDef USBH_HUB_GetHIDDescriptor(USBH_HandleTypeDef *phost,uint16_t length, uint8_t iface_idx, uint8_t *buf);
+USBH_StatusTypeDef USBH_HUB_GetHIDReportDescriptor(USBH_HandleTypeDef *phost, uint16_t length, uint8_t iface_idx,uint8_t *buf);
+
 
 void  USBH_HUB_ParseDevDesc(USBH_DevDescTypeDef *dev_desc, uint8_t *buf, uint16_t length);
 

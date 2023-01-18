@@ -100,37 +100,36 @@ USBH_StatusTypeDef USBH_HUB_SetPortFeature(USBH_HandleTypeDef *phost, uint8_t fe
    return USBH_CtlReq(phost, 0, 0);
 }
 
-void USBH_HUB_SetPortFeatureBL(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum)
+
+USBH_StatusTypeDef USBH_HUB_ClearPortFeature(USBH_HandleTypeDef *phost, uint8_t feature, uint8_t PortNum)
 {
 
-
-    phost->Control.setup.b.bmRequestType = 0b00100011; 
-    phost->Control.setup.b.bRequest = USB_REQUEST_SET_FEATURE;		
+  if (phost->RequestState == CMD_SEND)
+  {
+    phost->Control.setup.b.bmRequestType = 0b00100011;
+    phost->Control.setup.b.bRequest = USB_REQUEST_CLEAR_FEATURE;	
     phost->Control.setup.b.wValue.bw.msb = feature;
 	  phost->Control.setup.b.wValue.bw.lsb = 0x0;
     phost->Control.setup.b.wIndex.bw.msb = PortNum;
     phost->Control.setup.b.wIndex.bw.lsb = 0x0;
     phost->Control.setup.b.wLength.w = 0;
+  }    
 
-   while(USBH_CtlReq(phost, 0, 0)!=USBH_OK);
-
+   return USBH_CtlReq(phost, 0, 0);
 }
 
 
 USBH_StatusTypeDef USBH_HUB_Get_DevDesc(USBH_HandleTypeDef *phost, uint8_t length,HUB_Port_HandleTypeDef *Port)
 {
-
-      HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
       USBH_StatusTypeDef status;
 
-
-  if ((status = USBH_GetDescriptor(phost,USB_REQ_RECIPIENT_DEVICE | USB_REQ_TYPE_STANDARD,USB_DESC_DEVICE, 0U,HUB_Handle->buff, (uint16_t)length)) == USBH_OK)
-                                   
+   status = USBH_GetDescriptor(phost,USB_REQ_RECIPIENT_DEVICE | USB_REQ_TYPE_STANDARD,USB_DESC_DEVICE, 0U,Port->buff, (uint16_t)length);
+  if (status == USBH_OK)                                  
  { 
     /* Commands successfully sent and Response Received */
-    if (status == USBH_OK) 
-    USBH_HUB_ParseDevDesc(&Port->DevDesc, HUB_Handle->buff, (uint16_t)length);
+    USBH_HUB_ParseDevDesc(&Port->DevDesc, Port->buff, (uint16_t)length);
  }
+
 
  return status;
 
@@ -150,6 +149,26 @@ USBH_StatusTypeDef USBH_HUB_Get_CfgDesc(USBH_HandleTypeDef *phost,
   {
     /* Commands successfully sent and Response Received  */
     USBH_ParseCfgDesc(&Port->CfgDesc, HUB_Handle->buff, length);
+  }
+
+  return status;
+}
+
+
+
+USBH_StatusTypeDef USBH_HUB_Get_StringDesc(USBH_HandleTypeDef *phost,
+                                       uint8_t string_index, uint8_t *buff,
+                                       uint16_t length, HUB_Port_HandleTypeDef *Port)
+{
+  USBH_StatusTypeDef status;
+
+  if ((status = USBH_GetDescriptor(phost,
+                                   USB_REQ_RECIPIENT_DEVICE | USB_REQ_TYPE_STANDARD,
+                                   USB_DESC_STRING | string_index,0U,
+                                   Port->buff, length)) == USBH_OK)
+  {
+    /* Commands successfully sent and Response Received  */
+    USBH_ParseStringDesc(Port->buff, buff, length);
   }
 
   return status;
@@ -210,4 +229,29 @@ void  USBH_HUB_ParseHUBStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf)
  void  USBH_HUB_ParsePortStatus(HUB_HandleTypeDef *HUB_Handle,uint8_t *buf,HUB_Port_HandleTypeDef *Port)
 {
   Port->PortStatus= *(USB_HUB_PORT_STATUS *)(buf);
+}
+
+
+USBH_StatusTypeDef USBH_HUB_GetHIDDescriptor(USBH_HandleTypeDef *phost,
+		uint16_t length, uint8_t iface_idx, uint8_t *buf) {
+	USBH_StatusTypeDef status;
+
+	status = USBH_GetDescriptor(phost,
+	USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_STANDARD,
+	USB_DESC_HID, iface_idx, phost->device.Data, length);
+
+	return status;
+}
+
+
+USBH_StatusTypeDef USBH_HUB_GetHIDReportDescriptor(USBH_HandleTypeDef *phost, uint16_t length, uint8_t iface_idx,uint8_t *buf)
+  {
+
+	USBH_StatusTypeDef status;
+
+	status = USBH_GetDescriptor(phost,
+	USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_STANDARD,
+	USB_DESC_HID_REPORT, iface_idx, buf, length);
+
+	return status;
 }

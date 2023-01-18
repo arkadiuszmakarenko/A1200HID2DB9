@@ -9,6 +9,7 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_HUB_UpdatePortsStatus(USBH_HandleTypeDef *phost);
+static USBH_StatusTypeDef USBH_HUB_DisconnectDevice(USBH_HandleTypeDef *phost, HUB_Port_HandleTypeDef *Port);
 
 USBH_ClassTypeDef HUB_Class = 
 { 
@@ -57,7 +58,7 @@ static USBH_StatusTypeDef USBH_HUB_InterfaceInit(USBH_HandleTypeDef *phost)
         return USBH_FAIL;
     }
 
-      /* Initialize hid handler */
+      /* Initialize hub handler */
     USBH_memset(HUB_Handle, 0, sizeof(HUB_HandleTypeDef));
 
 
@@ -69,7 +70,10 @@ static USBH_StatusTypeDef USBH_HUB_InterfaceInit(USBH_HandleTypeDef *phost)
   HUB_Handle->length    = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize;
   HUB_Handle->poll      = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bInterval;
   HUB_Handle->InPipe    = phost->Control.pipe_in;
-  HUB_Handle->OutPipe    = phost->Control.pipe_out;
+  HUB_Handle->OutPipe   = phost->Control.pipe_out;
+  HUB_Handle->portNumber= 1;
+  HUB_Handle->DevInPipe = USBH_AllocPipe(phost, 0x80U);
+  HUB_Handle->DevOutPipe = USBH_AllocPipe(phost, 0x00U);
 
 
   
@@ -95,11 +99,33 @@ static USBH_StatusTypeDef USBH_HUB_InterfaceDeInit(USBH_HandleTypeDef *phost)
     HUB_Handle->OutPipe = 0U;     /* Reset the pipe as Free */
   }
 
+  for (int i = 0; i<4; i++)
+  {
+    if(HUB_Handle->Port[i].MFC!=0) 
+    {
+      free(HUB_Handle->Port[i].MFC);
+      HUB_Handle->Port[i].MFC = 0;
+    }
+    if(HUB_Handle->Port[i].Product!=0) 
+    {
+      free(HUB_Handle->Port[i].Product);
+      HUB_Handle->Port[i].Product = 0;
+    }
+  }
+
   if (phost->pActiveClass->pData[0])
   {
     USBH_free(phost->pActiveClass->pData[0]);
     phost->pActiveClass->pData[0] = 0U;
   }
+  USBH_FreePipe(phost,HUB_Handle->DevInPipe);
+  USBH_FreePipe(phost,HUB_Handle->DevOutPipe);
+
+  HUB_Handle->DevInPipe = 0;
+  HUB_Handle->DevOutPipe = 0;
+
+  USBH_memset(HUB_Handle, 0, sizeof(HUB_HandleTypeDef));
+
 
   return USBH_OK;
 }
@@ -112,6 +138,9 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost)
    switch (HUB_Handle->ctl_state)
    {
     case HUB_REQ_INIT:
+    phost->pUser(phost, HOST_USER_CLASS_ACTIVE);
+    HUB_Handle->ctl_state = HUB_REQ_GET_DESCRIPTOR; 
+    break;
     case HUB_REQ_GET_DESCRIPTOR:
 
         if (USBH_HUB_GetDescriptor(phost) == USBH_OK)
@@ -162,6 +191,7 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost)
       break;
 
     case HUB_REQ_DONE:
+      HAL_Delay(200);
       status = USBH_OK;
       break;
 
@@ -172,9 +202,9 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost)
 
 static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 {
-    USBH_StatusTypeDef status = USBH_BUSY;
+    USBH_StatusTypeDef status = USBH_OK;
     HUB_HandleTypeDef *HUB_Handle = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0];
-    static uint8_t portNumber = 1;
+    
 
     switch (HUB_Handle->state)
     {
@@ -194,33 +224,32 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
             HUB_Handle->state = HUB_HANDLE_DISCONNECTED_PORTS;
           }
 
-          if ( status == USBH_FAIL || status == USBH_NOT_SUPPORTED || status ==  USBH_UNRECOVERED_ERROR)
-          {
-
-            uint8_t x = 0;
-            x++;
-          }
 
       break;
     
     case HUB_HANDLE_DISCONNECTED_PORTS:
 
-      if (HUB_Handle->Port[portNumber-1].Disconnected)
+      if (HUB_Handle->Port[HUB_Handle->portNumber-1].Disconnected)
       {
         // Handle Disconnection
         //DeInit HID, Free Pipes and clear Handles.
+        status = USBH_HUB_DisconnectDevice(phost,&HUB_Handle->Port[HUB_Handle->portNumber-1]);
+        if (status == USBH_OK)
+        {
+          HUB_Handle->Port[HUB_Handle->portNumber-1].Disconnected = 0;
+        }
 
-        HUB_Handle->Port[portNumber-1].Disconnected = 0;
+        
       }
       else 
       {
-        if (portNumber<4)
+        if (HUB_Handle->portNumber<4)
         { 
-        portNumber++;
+        HUB_Handle->portNumber++;
         }
         else
         {
-            portNumber = 1;
+            HUB_Handle->portNumber = 1;
             HUB_Handle->state = HUB_HANDLE_CONNECTED_PORTS;
         }
       }
@@ -228,25 +257,25 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 
     case HUB_HANDLE_CONNECTED_PORTS:
 
-      if (HUB_Handle->Port[portNumber-1].Connected)
+      if (HUB_Handle->Port[HUB_Handle->portNumber-1].Connected)
       {
         // Handle Connection / Enumeration
 
-        status = USBH_HUB_Device_Enum(phost,&HUB_Handle->Port[portNumber-1]);
+        status = USBH_HUB_Device_Enum(phost,&HUB_Handle->Port[HUB_Handle->portNumber-1]);
         if (status==USBH_OK)
         {
-          HUB_Handle->Port[portNumber-1].Connected = 0;
+          HUB_Handle->Port[HUB_Handle->portNumber-1].Connected = 0;
         }
       }
       else 
       {
-        if (portNumber<4)
+        if (HUB_Handle->portNumber<4)
         { 
-        portNumber++;
+          HUB_Handle->portNumber++;
         }
         else
         {
-            portNumber = 1;
+            HUB_Handle->portNumber = 1;
             HUB_Handle->state = HUB_PROCESS_PORTS;
         }
       }
@@ -257,7 +286,6 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
       HUB_Handle->state = HUB_INIT;
       break;
 
-           // if ( status == USBH_FAIL || status == USBH_NOT_SUPPORTED || USBH_UNRECOVERED_ERROR)
     default:
         status = USBH_FAIL;
       break;
@@ -301,4 +329,19 @@ static USBH_StatusTypeDef USBH_HUB_UpdatePortsStatus(USBH_HandleTypeDef *phost)
       
     }
 	return status;
+}
+
+
+
+static USBH_StatusTypeDef USBH_HUB_DisconnectDevice(USBH_HandleTypeDef *phost, HUB_Port_HandleTypeDef *Port)
+{
+    USBH_StatusTypeDef status = USBH_OK;
+
+      free(Port->MFC);
+      Port->MFC = 0;
+      free(Port->Product);
+      Port->Product = 0;
+      USBH_memset(Port, 0, sizeof(HUB_Port_HandleTypeDef));
+
+  return status;
 }
