@@ -283,7 +283,12 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 
 
     case HUB_PROCESS_PORTS:
-      HUB_Handle->state = HUB_INIT;
+
+
+        USBH_HUB_Device_Process(phost);
+
+
+     // HUB_Handle->state = HUB_INIT;
       break;
 
     default:
@@ -299,12 +304,11 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 
 static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
 {
-    USBH_StatusTypeDef status = USBH_BUSY;
+    USBH_StatusTypeDef status = USBH_OK;
+	  return status;
 
 
-	
 
-	return status;
 }
 
 

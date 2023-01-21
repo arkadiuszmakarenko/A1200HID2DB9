@@ -44,10 +44,25 @@ HUB_CtlStateTypeDef;
 
 typedef enum
 {
+  HUB_DEVICE_INIT = 0,
+  HUB_DEVICE_IDLE,
+  HUB_DEVICE_SEND_DATA,
+  HUB_DEVICE_BUSY,
+  HUB_DEVICE_GET_DATA,
+  HUB_DEVICE_SYNC,
+  HUB_DEVICE_POLL,
+  HUB_DEVICE_ERROR
+}
+HUB_PORT_StateTypeDef;
+
+
+typedef enum
+{
   HUB_ENUM_INIT= 0U,
   HUB_ENUM_CLEAR_POWER_OFF_PORT,
   HUB_ENUM_CLEAR_POWER_ON_PORT,
   HUB_ENUM_RESET_PORT,
+  HUB_ENUM_RESET_PORT2,
   HUB_ENUM_CHECK_ENABLE_PORT,
   HUB_ENUM_GET_DEV_DESC,
   HUB_ENUM_GET_FULL_DEV_DESC,
@@ -60,6 +75,14 @@ typedef enum
   HUB_ENUM_GET_HID_REPORT_DESC,
   HUB_ENUM_GET_HID_DESC_INTER2,
   HUB_ENUM_GET_HID_REPORT_DESC_INTER2,
+  HUB_ENUM_SET_CONFIGURATION,
+  HUB_ENUM_SET_WAKEUP_FEATURE,
+  HUB_ENUM_SET_PROTOCOL,
+  HUB_ENUM_SET_IDLE,
+  HUB_ENUM_SET_PROTOCOL_INTER2,
+  HUB_ENUM_SET_IDLE_INTER2,
+  HUB_ENUM_INTERFACE_INIT,
+  HUB_ENUM_INTERFACE_2_INIT,
   HUB_ENUM_READY
 }
 HUB_DEV_ENUMStateTypeDef;
@@ -126,7 +149,24 @@ typedef struct __attribute__ ((packed)) _USB_HUB_PORT_STATUS
 
 } USB_HUB_PORT_STATUS;
 
+typedef struct _HUB_Port_Interface_Process
+{
+  uint8_t                           Pipe_in;
+  uint8_t                           Pipe_out;
+  uint8_t                           OutEp;
+  uint8_t                           InEp;
+  HUB_PORT_StateTypeDef             state;
+  uint8_t                           *pData;
+  uint16_t                          length;
+  uint8_t                           ep_addr;
+  uint16_t                          poll;
+  uint32_t                          timer;
+  uint8_t                           DataReady;
+  USBH_StatusTypeDef(* Init)(USBH_HandleTypeDef *phost);
+  uint8_t                           buff[256];
 
+}
+HUB_Port_Interface_HandleTypeDef;
 
 typedef struct _HUB_Port_Process
 {
@@ -140,17 +180,19 @@ typedef struct _HUB_Port_Process
   uint8_t                           Pipe_size;
   uint8_t                           address;
   uint8_t                           speed;
-  uint8_t                           current_interface;
   uint8_t                           *MFC;
   uint8_t                           *Product;
   USBH_DevDescTypeDef               DevDesc;
   USBH_CfgDescTypeDef               CfgDesc;
-  HID_DescTypeDef                   HIDDesc;
-  HID_DescTypeDef                   HIDDesc_Inter2;
+  HID_DescTypeDef                   HIDDesc[2];
+  HUB_Port_Interface_HandleTypeDef  Interface[2];
   uint8_t                           buff[512];
 
 }
 HUB_Port_HandleTypeDef;
+
+
+
 
 //Hub Handle
 

@@ -255,3 +255,17 @@ USBH_StatusTypeDef USBH_HUB_GetHIDReportDescriptor(USBH_HandleTypeDef *phost, ui
 
 	return status;
 }
+
+
+
+USBH_StatusTypeDef USBH_HUB_SetIdle(USBH_HandleTypeDef *phost, uint16_t length, uint8_t iface_idx,uint8_t *buf)
+  {
+
+	USBH_StatusTypeDef status;
+
+	status = USBH_GetDescriptor(phost,
+	USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_STANDARD,
+	USB_DESC_HID_REPORT, iface_idx, buf, length);
+
+	return status;
+}
