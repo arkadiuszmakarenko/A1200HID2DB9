@@ -221,6 +221,8 @@ typedef struct _HUB_Process
   HUB_Port_HandleTypeDef Port[4];
   uint8_t              PortStatusChangeFlag;
   uint8_t              portNumber;
+  uint8_t              current_port_number;
+  uint8_t              current_Itf_number;
 
 }
 HUB_HandleTypeDef;

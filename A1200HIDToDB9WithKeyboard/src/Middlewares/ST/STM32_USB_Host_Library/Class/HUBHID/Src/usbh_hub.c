@@ -191,7 +191,6 @@ static USBH_StatusTypeDef USBH_HUB_ClassRequest(USBH_HandleTypeDef *phost)
       break;
 
     case HUB_REQ_DONE:
-      HAL_Delay(200);
       status = USBH_OK;
       break;
 
@@ -212,6 +211,9 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
       phost->Control.pipe_size = phost->device.DevDesc.bMaxPacketSize;
       phost->Control.pipe_in = HUB_Handle->InPipe;
       phost->Control.pipe_out = HUB_Handle->OutPipe;
+
+      HUB_Handle->current_Itf_number = 0;
+      HUB_Handle->current_port_number = 0;
 
 
       HUB_Handle->state = HUB_UPDATE_PORTS_STATUS;
@@ -283,12 +285,12 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 
 
     case HUB_PROCESS_PORTS:
+      //handle all ports and interfaces at once.
+      USBH_HUB_Device_Process(phost);
 
 
-        USBH_HUB_Device_Process(phost);
 
-
-     // HUB_Handle->state = HUB_INIT;
+      //HUB_Handle->state = HUB_INIT;
       break;
 
     default:
@@ -305,6 +307,63 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
 static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
 {
     USBH_StatusTypeDef status = USBH_OK;
+    HUB_HandleTypeDef *HUB_Handle  = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0]; 
+    uint8_t currentPort = HUB_Handle->current_port_number;
+    uint8_t currentItf  = HUB_Handle->current_Itf_number;
+
+    HUB_Port_HandleTypeDef *port = (HUB_Port_HandleTypeDef *) &HUB_Handle->Port[currentPort];
+    if (port->EnumState != HUB_ENUM_READY) return status;
+
+    HUB_Port_Interface_HandleTypeDef *Itf = (HUB_Port_Interface_HandleTypeDef *) &port->Interface[currentItf];
+
+    if (Itf->state == HUB_DEVICE_POLL)
+    {
+        if(phost->Timer - Itf->timer > Itf->poll)
+        {
+          Itf->state = HUB_DEVICE_GET_DATA;
+
+          //CHECK IF NEXT INTERFACE NEED TO BE HANDLED
+          if(port->CfgDesc.bNumInterfaces>1)
+          {
+             //NEXT INTERFACE
+              if(HUB_Handle->current_Itf_number == 0)
+              {
+                HUB_Handle->current_Itf_number = 1;
+              }
+              else
+              {
+                //ALREADY DONE BOTH INTERFACES RESET INTERFACE AND SELECT NEXT PORT
+                HUB_Handle->current_Itf_number = 0;
+
+                if(HUB_Handle->current_port_number ==3)
+                {
+                  HUB_Handle->current_port_number = 0;
+                }
+                else
+                {
+                  HUB_Handle->current_port_number++;
+                }
+              }
+          } else
+          {
+            //NO MORE INTERFACES SELECT NEXT PORT
+                if(HUB_Handle->current_port_number ==3)
+                {
+                  HUB_Handle->current_port_number = 0;
+                }
+                else
+                {
+                  HUB_Handle->current_port_number++;
+                }
+
+          }
+
+
+
+        }
+    }
+
+
 	  return status;
 
 
@@ -349,3 +408,5 @@ static USBH_StatusTypeDef USBH_HUB_DisconnectDevice(USBH_HandleTypeDef *phost, H
 
   return status;
 }
+
+

@@ -326,7 +326,18 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
             }
             else
             {
-                status = USBH_HID_SetIdle(phost, 0U, 0U, 0U);
+                if (port->CfgDesc.bNumInterfaces>1)
+                {
+                    //read second interface HID Descriptor if exist
+                    status = USBH_BUSY;
+                    port->EnumState = HUB_ENUM_SET_PROTOCOL_INTER2;
+                }
+                else
+                {
+			        port->EnumState = HUB_ENUM_INTERFACE_INIT;
+                    status = USBH_BUSY;
+                }
+                //status = USBH_HID_SetIdle(phost, 0U, 0U, 0U);
             }
 
             if (status == USBH_OK || status == USBH_NOT_SUPPORTED)
@@ -342,6 +353,7 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
 			        port->EnumState = HUB_ENUM_INTERFACE_INIT;
                     status = USBH_BUSY;
                 }
+
             }
     break;
 
@@ -363,13 +375,16 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
             }
             else
             {
-                status = USBH_HID_SetIdle(phost, 0U, 0U, 1U);
+               // status = USBH_HID_SetIdle(phost, 0U, 0U, 1U);
+               		port->EnumState = HUB_ENUM_INTERFACE_INIT;
+                    status = USBH_BUSY;
             }
 
             if (status == USBH_OK||status == USBH_NOT_SUPPORTED)
             {
-			        port->EnumState = HUB_ENUM_INTERFACE_INIT;
+                    port->EnumState = HUB_ENUM_INTERFACE_INIT;
                     status = USBH_BUSY;
+	
             }
     break;
 
@@ -402,7 +417,7 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
 			}
         }
 
-        port->Interface[0].Pipe_in  = port->Pipe_in;
+        port->Interface[0].Pipe_in  = USBH_AllocPipe(phost,port->Interface[0].InEp);
         port->Interface[0].Pipe_out = port->Pipe_out;
 
 
@@ -447,8 +462,8 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
 		}
         }
 
-            port->Interface[1].Pipe_in = USBH_AllocPipe(phost, port->Interface[1].InEp);
-            port->Interface[1].Pipe_out= USBH_AllocPipe(phost, port->Interface[1].OutEp );
+            port->Interface[1].Pipe_in =  USBH_AllocPipe(phost,port->Interface[1].InEp);
+            port->Interface[1].Pipe_out= port->Pipe_out;
 
 
 
@@ -481,60 +496,67 @@ HUB_Port_Interface_HandleTypeDef *Itf;
 
 
     //sync
-    while(phost->Timer & 1U);
+    //while(phost->Timer & 1U);
+uint8_t interfaceNumber =  HUB_Handle->current_Itf_number ;
+uint8_t portNumber = HUB_Handle->current_port_number ;
 
-    uint8_t portNumber = 0;
-    uint8_t interfaceNumber = 1;
-while(1)
-{
-    for(portNumber = 0;portNumber<4;portNumber++)
+
+
+ //   for(uint8_t portNumber = 0;portNumber<4;portNumber++)
+  //  {
+    port = (HUB_Port_HandleTypeDef *) &HUB_Handle->Port[portNumber];
+    if (port->EnumState != HUB_ENUM_READY) 
     {
-        port = (HUB_Port_HandleTypeDef *) &HUB_Handle->Port[portNumber];
-        if (port->EnumState != HUB_ENUM_READY) continue;
-
-
-        for(interfaceNumber = 0 ;interfaceNumber<(port->CfgDesc.bNumInterfaces);interfaceNumber++)
+        if(HUB_Handle->current_port_number == 3)
         {
-           Itf = (HUB_Port_Interface_HandleTypeDef *) &port->Interface[interfaceNumber];
+            HUB_Handle->current_port_number = 0;
+        } 
+        else
+        {
+            HUB_Handle->current_port_number++;
+        }
+     return status;
+    }
+       // for(uint8_t interfaceNumber = 0 ;interfaceNumber<(port->CfgDesc.bNumInterfaces);interfaceNumber++)
+       // {
+    Itf = (HUB_Port_Interface_HandleTypeDef *) &port->Interface[interfaceNumber];
 
-           USBH_HUB_SETUP_PIPES(phost,HUB_Handle,port,Itf);
-
+    switch(Itf->state)
+    {
+        case HUB_DEVICE_INIT:
+        USBH_HUB_SETUP_PIPES(phost,HUB_Handle,port,Itf);
+        Itf->state = HUB_DEVICE_GET_DATA;
+        break;
+        case HUB_DEVICE_GET_DATA:
+                
                 USBH_InterruptReceiveData(phost, Itf->buff, (uint8_t) Itf->length, Itf->Pipe_in);
+                Itf->timer = phost->Timer;
+	            Itf->DataReady = 0U;
+                Itf->state = HUB_DEVICE_POLL;
+        break;
 
-		        Itf->timer = phost->Timer;
-		        Itf->DataReady = 0U;
-
-                while ( (phost->Timer - Itf->timer) < Itf->poll )   
-                {
+        case HUB_DEVICE_POLL:
                     URBStatus = USBH_LL_GetURBState(phost, Itf->Pipe_in);
                     if (URBStatus== USBH_URB_DONE)
                     {
 			            XferSize = USBH_LL_GetLastXferSize(phost, Itf->Pipe_in);
+                        Itf->state = HUB_DEVICE_GET_DATA;
                         break;
 			        }
+                    if (URBStatus == USBH_URB_STALL)
+                    {
+                           while (USBH_ClrFeature(phost, Itf->ep_addr) == USBH_OK);
+                           Itf->state = HUB_DEVICE_GET_DATA;
+                           break;
+                    }
 
                     if (URBStatus == USBH_URB_ERROR)
                     {
+                        Itf->state = HUB_DEVICE_GET_DATA;
                         break;
                     }
-                }
-		    }
-
-        
-
-
-
-        }
-
-
-
-
-
-
-    
-
-
-}
+                
+    }
 
 return status;
 }
@@ -542,14 +564,13 @@ return status;
 
 void USBH_HUB_SETUP_PIPES(USBH_HandleTypeDef *phost,HUB_HandleTypeDef *HUB_Handle,HUB_Port_HandleTypeDef *port,HUB_Port_Interface_HandleTypeDef *Itf)
 {
-				/* Open pipe for IN endpoint*/
-                
+				/* Open pipe for IN endpoint*/     
 				USBH_OpenPipe(phost, Itf->Pipe_in, Itf->InEp, port->address, port->speed, USB_EP_TYPE_INTR, Itf->length);
-				USBH_LL_SetToggle(phost, Itf->Pipe_in, 1U);
+				USBH_LL_SetToggle(phost, Itf->Pipe_in, 0U);
 
-                				/* Open pipe for OUT endpoint*/
-				USBH_OpenPipe(phost, Itf->Pipe_out, Itf->OutEp, port->address, port->speed, USB_EP_TYPE_INTR, Itf->length);
-				USBH_LL_SetToggle(phost, Itf->Pipe_out, 0U);
+               				/* Open pipe for OUT endpoint*/
+			//	USBH_OpenPipe(phost, Itf->Pipe_out, Itf->OutEp, port->address, port->speed, USB_EP_TYPE_INTR, Itf->length);
+			//	USBH_LL_SetToggle(phost, Itf->Pipe_out, 0U);
 
 
 }
