@@ -175,9 +175,6 @@ typedef struct _HUB_Port_Process
   uint8_t                           Disconnected;
   HUB_DEV_ENUMStateTypeDef          EnumState;
   uint8_t                           DevDescNum;
-  uint8_t                           Pipe_in;
-  uint8_t                           Pipe_out;
-  uint8_t                           Pipe_size;
   uint8_t                           address;
   uint8_t                           speed;
   uint8_t                           *MFC;
@@ -187,6 +184,8 @@ typedef struct _HUB_Port_Process
   HID_DescTypeDef                   HIDDesc[2];
   HUB_Port_Interface_HandleTypeDef  Interface[2];
   uint8_t                           buff[512];
+  uint32_t                          EnumTime;
+  uint8_t                           Reenumerate;
 
 }
 HUB_Port_HandleTypeDef;
@@ -200,10 +199,6 @@ HUB_Port_HandleTypeDef;
 /* Structure for HUB process */
 typedef struct _HUB_Process
 {
-  uint8_t              OutPipe;
-  uint8_t              InPipe;
-  uint8_t              DevOutPipe;
-  uint8_t              DevInPipe;
   HUB_StateTypeDef     state;
   uint8_t              OutEp;
   uint8_t              InEp;

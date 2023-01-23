@@ -44,9 +44,9 @@ int main(void)
     MX_USB_HOST_Process();
 
 
-    ProcessMouse();
-    ProcessJoystick();
-    amikb_process();
+    //ProcessMouse();
+    //ProcessJoystick();
+    //amikb_process();
 
 
 
