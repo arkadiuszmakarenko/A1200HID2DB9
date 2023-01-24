@@ -3,6 +3,9 @@
 #include "usbh_core.h"
 #include "usbh_hid_reportparser.h"
 #include "usbh_hub_keybd.h"
+#include "usbh_hub_mouse.h"
+
+
 
 
 
@@ -17,7 +20,7 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
     switch (port->EnumState)
    {
     case HUB_ENUM_INIT:
-            USBH_OpenPipe(phost, phost->Control.pipe_in, 0x80U,
+            USBH_OpenPipe(phost, phost->Control.pipe_in, 0x80,
             phost->device.address, phost->device.speed,
             USBH_EP_CONTROL, (uint16_t)phost->Control.pipe_size);
 
@@ -265,7 +268,7 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
     case HUB_ENUM_SET_IDLE:
             if(port->CfgDesc.Itf_Desc[0].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[0].bInterfaceSubClass == 0x01 && (port->CfgDesc.Itf_Desc[0].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE || port->HIDDesc[0].RptDesc.type == REPORT_TYPE_KEYBOARD) )
             {
-			    status = USBH_HID_SetIdle(phost, 125U, 0U, 0U);
+			    status = USBH_HID_SetIdle(phost, 0U, 0U, 0U);
             }
             else
             {
@@ -314,7 +317,7 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
     case HUB_ENUM_SET_IDLE_INTER2:
             if(port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[1].bInterfaceSubClass == 0x01 && (port->CfgDesc.Itf_Desc[1].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE || port->HIDDesc[1].RptDesc.type == REPORT_TYPE_KEYBOARD))
             {
-			    status = USBH_HID_SetIdle(phost, 125U, 0U, 1U);
+			    status = USBH_HID_SetIdle(phost, 0U, 0U, 1U);
             }
             else
             {
@@ -333,15 +336,9 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
 
     case HUB_ENUM_INTERFACE_INIT:
 
-        if ((port->CfgDesc.Itf_Desc[0].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[0].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[0].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE) || (port->HIDDesc[0].RptDesc.type == REPORT_TYPE_KEYBOARD))
-        {       
-            USBH_HUB_KeybdInit(phost);
-        }
-
         //read report lenght
-
+        port->Interface[0].Id = 0;
         port->Interface[0].length = port->HIDDesc[0].RptDesc.report_size;
-        port->Interface[0].pData = malloc(port->HIDDesc[0].RptDesc.report_size);
         port->Interface[0].poll   = port->CfgDesc.Itf_Desc[0].Ep_Desc[0].bInterval;
         port->Interface[0].ep_addr = port->CfgDesc.Itf_Desc[0].Ep_Desc[0].bEndpointAddress;
 
@@ -354,17 +351,20 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
             {
 				port->Interface[0].InEp = port->CfgDesc.Itf_Desc[0].Ep_Desc[num].bEndpointAddress;
             } 
-            else 
-            {
-			    port->Interface[0].OutEp = port->CfgDesc.Itf_Desc[0].Ep_Desc[num].bEndpointAddress;
-			}
         }
 
         port->Interface[0].Pipe_in  = USBH_AllocPipe(phost,port->Interface[0].InEp);
 
 
+        if ((port->CfgDesc.Itf_Desc[0].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[0].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[0].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE ) || (port->HIDDesc[0].RptDesc.type == REPORT_TYPE_KEYBOARD))
+        {       
+            USBH_HUB_KeybdInit(phost,port,&port->Interface[0]);
+        }
 
-
+        if ((port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[0].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[0].bInterfaceProtocol == HID_MOUSE_BOOT_CODE )|| (port->HIDDesc[0].RptDesc.type == REPORT_TYPE_MOUSE))
+        {       
+            USBH_HUB_MouseInit(phost,port,&port->Interface[0]);
+        }
 
         if (port->CfgDesc.bNumInterfaces>1)
         {
@@ -379,15 +379,10 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
     break;
 
     case HUB_ENUM_INTERFACE_2_INIT:
-        if ((port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[1].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[1].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE) || (port->HIDDesc[1].RptDesc.type == REPORT_TYPE_KEYBOARD))
-        {       
-            USBH_HUB_KeybdInit(phost);
-        }
-
         //read report lenght
-
-        port->Interface[1].length = 8U; //port->HIDDesc[1].RptDesc.report_size;
-        port->Interface[1].pData = malloc(8U);//malloc(port->HIDDesc[1].RptDesc.report_size);
+        
+        port->Interface[1].Id = 1;
+        port->Interface[1].length = port->HIDDesc[1].RptDesc.report_size;
         port->Interface[1].poll   = port->CfgDesc.Itf_Desc[1].Ep_Desc[0].bInterval;
         port->Interface[1].ep_addr = port->CfgDesc.Itf_Desc[1].Ep_Desc[0].bEndpointAddress;
 
@@ -399,12 +394,19 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
         if (port->CfgDesc.Itf_Desc[1].Ep_Desc[num].bEndpointAddress & 0x80U) 
         {
 	    	port->Interface[1].InEp = port->CfgDesc.Itf_Desc[1].Ep_Desc[num].bEndpointAddress;
-        } else 
-        {
-		    port->Interface[1].OutEp = port->CfgDesc.Itf_Desc[1].Ep_Desc[num].bEndpointAddress;
-		}
+        } 
         }
             port->Interface[1].Pipe_in =  USBH_AllocPipe(phost,port->Interface[1].InEp);
+
+        if ((port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[1].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[1].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE) || (port->HIDDesc[1].RptDesc.type == REPORT_TYPE_KEYBOARD))
+        {       
+            USBH_HUB_KeybdInit(phost,port,&port->Interface[1]);
+        }
+
+        if ((port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[1].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[1].bInterfaceProtocol == HID_MOUSE_BOOT_CODE ) || (port->HIDDesc[1].RptDesc.type == REPORT_TYPE_MOUSE))
+        {       
+            USBH_HUB_MouseInit(phost,port,&port->Interface[1]);
+        }
 
     		port->EnumState = HUB_ENUM_READY;
             status = USBH_BUSY;
@@ -424,12 +426,13 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
 
 USBH_StatusTypeDef USBH_HUB_Device_Process(USBH_HandleTypeDef *phost)
 {
+uint8_t XferSize;
 USBH_StatusTypeDef status = USBH_BUSY;
 HUB_HandleTypeDef *HUB_Handle  = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0]; 
 HUB_Port_HandleTypeDef *port ;
 HUB_Port_Interface_HandleTypeDef *Itf; 
 
-uint8_t XferSize = 0U;
+
 USBH_URBStateTypeDef URBStatus;
 
 uint8_t interfaceNumber =  HUB_Handle->current_Itf_number ;
@@ -464,7 +467,7 @@ uint8_t portNumber = HUB_Handle->current_port_number ;
         break;
         case HUB_DEVICE_GET_DATA:
                 
-                USBH_InterruptReceiveData(phost, Itf->buff, (uint8_t) Itf->length, Itf->Pipe_in);
+                USBH_InterruptReceiveData(phost, Itf->pData, (uint8_t) Itf->length, Itf->Pipe_in);
                 Itf->timer = phost->Timer;
 	            Itf->DataReady = 0U;
                 Itf->state = HUB_DEVICE_POLL;
@@ -475,8 +478,15 @@ uint8_t portNumber = HUB_Handle->current_port_number ;
                     if (URBStatus== USBH_URB_DONE)
                     {
 			            XferSize = USBH_LL_GetLastXferSize(phost, Itf->Pipe_in);
-                        Itf->state = HUB_DEVICE_GET_DATA;
-                        break;
+
+                        if (Itf->DataReady == 0U && XferSize != 0U) 
+                        { 
+                            USBH_HID_FifoWrite(&Itf->fifo, Itf->pFIFObuf, Itf->length);
+				            Itf->DataReady = 1U;
+                            
+                            Itf->state = HUB_DEVICE_GET_DATA;
+                            break;
+                        }
 			        }
                     if (URBStatus == USBH_URB_STALL)
                     {
@@ -499,13 +509,6 @@ return status;
 
 void USBH_HUB_SETUP_PIPES(USBH_HandleTypeDef *phost,HUB_HandleTypeDef *HUB_Handle,HUB_Port_HandleTypeDef *port,HUB_Port_Interface_HandleTypeDef *Itf)
 {
-				/* Open pipe for IN endpoint*/     
-				USBH_OpenPipe(phost, Itf->Pipe_in, Itf->InEp, port->address, port->speed, USB_EP_TYPE_INTR, Itf->length);
-				USBH_LL_SetToggle(phost, Itf->Pipe_in, 0U);
-
-               				/* Open pipe for OUT endpoint*/
-			//	USBH_OpenPipe(phost, Itf->Pipe_out, Itf->OutEp, port->address, port->speed, USB_EP_TYPE_INTR, Itf->length);
-			//	USBH_LL_SetToggle(phost, Itf->Pipe_out, 0U);
-
-
+	USBH_OpenPipe(phost, Itf->Pipe_in, Itf->InEp, port->address, port->speed, USB_EP_TYPE_INTR, Itf->length);
+	USBH_LL_SetToggle(phost, Itf->Pipe_in, 0U);
 }

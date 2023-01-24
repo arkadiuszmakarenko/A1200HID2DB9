@@ -84,39 +84,34 @@ static USBH_StatusTypeDef USBH_HID_MouseDecode(USBH_HandleTypeDef *phost);
   */
 HID_MOUSE_Info_TypeDef    mouse_info;
 uint8_t                 mouse_report_data[8];
-uint32_t                  mouse_rx_report_buf[2];
+uint32_t                mouse_rx_report_buf[2];
 
 
 /**
   * @}
   */
-static uint16_t collect_bits(uint8_t *p, uint16_t offset, uint8_t size, int is_signed) {
+uint16_t collect_bits(uint8_t *p, uint16_t offset, uint8_t size, int is_signed) {
   // mask unused bits of first byte
   uint8_t mask = 0xff << (offset&7);
   uint8_t byte = offset/8;
   uint8_t bits = size;
   uint8_t shift = offset&7;
 
-  //  iprintf("0 m:%x by:%d bi=%d sh=%d ->", mask, byte, bits, shift);
+
   uint16_t rval = (p[byte++] & mask) >> shift;
-  //  iprintf("%d\n", (int16_t)rval);
   mask = 0xff;
   shift = 8-shift;
   bits -= shift;
 
   // first byte already contained more bits than we need
   if(shift > size) {
-    //    iprintf("  too many bits, masked %x ->", (1<<size)-1);
     // mask unused bits
     rval &= (1<<size)-1;
-    //    iprintf("%d\n", (int16_t)rval);
   } else {
     // further bytes if required
     while(bits) {
       mask = (bits<8)?(0xff>>(8-bits)):0xff;
-      //      iprintf("+ m:%x by:%d bi=%d sh=%d ->", mask, byte, bits, shift);
       rval += (p[byte++] & mask) << shift;
-      //      iprintf("%d\n", (int16_t)rval);
       shift += 8;
       bits -= (bits>8)?8:bits;
     }
@@ -130,7 +125,6 @@ static uint16_t collect_bits(uint8_t *p, uint16_t offset, uint8_t size, int is_s
 	rval |= sign_bit;
 	sign_bit <<= 1;
       }
-      //      iprintf(" is negative -> sign expand to %d\n", (int16_t)rval);
     }
   }
 

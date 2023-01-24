@@ -89,6 +89,7 @@ HID_MOUSE_Info_TypeDef;
   */
 USBH_StatusTypeDef USBH_HID_MouseInit(USBH_HandleTypeDef *phost);
 HID_MOUSE_Info_TypeDef *USBH_HID_GetMouseInfo(USBH_HandleTypeDef *phost);
+uint16_t collect_bits(uint8_t *p, uint16_t offset, uint8_t size, int is_signed);
 
 /**
   * @}

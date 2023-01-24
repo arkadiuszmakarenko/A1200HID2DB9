@@ -45,13 +45,8 @@ HUB_CtlStateTypeDef;
 typedef enum
 {
   HUB_DEVICE_INIT = 0,
-  HUB_DEVICE_IDLE,
-  HUB_DEVICE_SEND_DATA,
-  HUB_DEVICE_BUSY,
   HUB_DEVICE_GET_DATA,
-  HUB_DEVICE_SYNC,
-  HUB_DEVICE_POLL,
-  HUB_DEVICE_ERROR
+  HUB_DEVICE_POLL
 }
 HUB_PORT_StateTypeDef;
 
@@ -59,11 +54,8 @@ HUB_PORT_StateTypeDef;
 typedef enum
 {
   HUB_ENUM_INIT= 0U,
-  HUB_ENUM_CLEAR_POWER_OFF_PORT,
-  HUB_ENUM_CLEAR_POWER_ON_PORT,
   HUB_ENUM_RESET_PORT,
   HUB_ENUM_RESET_PORT2,
-  HUB_ENUM_CHECK_ENABLE_PORT,
   HUB_ENUM_GET_DEV_DESC,
   HUB_ENUM_GET_FULL_DEV_DESC,
   HUB_ENUM_SET_ADDR,
@@ -151,19 +143,21 @@ typedef struct __attribute__ ((packed)) _USB_HUB_PORT_STATUS
 
 typedef struct _HUB_Port_Interface_Process
 {
+  uint8_t                           Id;
   uint8_t                           Pipe_in;
-  uint8_t                           Pipe_out;
-  uint8_t                           OutEp;
+ // uint8_t                           Pipe_out;
+ // uint8_t                           OutEp;
   uint8_t                           InEp;
   HUB_PORT_StateTypeDef             state;
-  uint8_t                           *pData;
   uint16_t                          length;
   uint8_t                           ep_addr;
   uint16_t                          poll;
   uint32_t                          timer;
   uint8_t                           DataReady;
   USBH_StatusTypeDef(* Init)(USBH_HandleTypeDef *phost);
-  uint8_t                           buff[256];
+  uint8_t                           pData[64];
+  FIFO_TypeDef                      fifo;
+  uint8_t                           *pFIFObuf;
 
 }
 HUB_Port_Interface_HandleTypeDef;

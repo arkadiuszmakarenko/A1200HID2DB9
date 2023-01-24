@@ -68,6 +68,7 @@ static USBH_StatusTypeDef USBH_HUB_InterfaceInit(USBH_HandleTypeDef *phost)
   HUB_Handle->ctl_state = HUB_REQ_INIT;
   HUB_Handle->ep_addr   = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress;
   HUB_Handle->length    = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize;
+  HUB_Handle->InEp      = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress;
   HUB_Handle->poll      = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bInterval;
   HUB_Handle->portNumber= 1;
 
@@ -187,13 +188,16 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
     switch (HUB_Handle->state)
     {
     case HUB_INIT:
-            USBH_OpenPipe(phost, phost->Control.pipe_in, 0x80U,
+            USBH_OpenPipe(phost, phost->Control.pipe_in, 0x80,
             phost->device.address, phost->device.speed,
-            USBH_EP_CONTROL, (uint16_t)phost->Control.pipe_size);
+            USBH_EP_CONTROL, (uint16_t)0x40);
 
             USBH_OpenPipe(phost, phost->Control.pipe_out, 0x00U,
             phost->device.address, phost->device.speed,
-            USBH_EP_CONTROL, (uint16_t)phost->Control.pipe_size);
+            USBH_EP_CONTROL, (uint16_t)0x40);
+
+            phost->Control.pipe_size = 0x40;
+            phost->Control.length = HUB_Handle->length;
 
       HUB_Handle->state = HUB_UPDATE_PORTS_STATUS;
       break;
@@ -219,8 +223,6 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
         {
           HUB_Handle->Port[HUB_Handle->portNumber-1].Disconnected = 0;
         }
-
-        
       }
       else 
       {
@@ -241,15 +243,14 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
       if (HUB_Handle->Port[HUB_Handle->portNumber-1].Connected)
       {
         // Handle Connection / Enumeration
-
         status = USBH_HUB_Device_Enum(phost,&HUB_Handle->Port[HUB_Handle->portNumber-1]);
-        if (phost->Timer - HUB_Handle->Port[HUB_Handle->portNumber-1].EnumTime >500) 
-        {
-          HUB_Handle->Port[HUB_Handle->portNumber-1].EnumState = HUB_ENUM_CLEAR_POWER_OFF_PORT;
-          HUB_Handle->Port[HUB_Handle->portNumber-1].Reenumerate++;
-        }
+   //     if (phost->Timer - HUB_Handle->Port[HUB_Handle->portNumber-1].EnumTime >500) 
+     //   {
+      //    HUB_Handle->Port[HUB_Handle->portNumber-1].EnumState = HUB_ENUM_INIT;
+      //    HUB_Handle->Port[HUB_Handle->portNumber-1].Reenumerate++;
+      //  }
 
-        if (HUB_Handle->Port[HUB_Handle->portNumber-1].Reenumerate == 5) status=USBH_OK;
+       /// if (HUB_Handle->Port[HUB_Handle->portNumber-1].Reenumerate == 5) status=USBH_OK;
 
 
         if (status==USBH_OK)
@@ -351,14 +352,8 @@ static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
         }
     }
 
-
 	  return status;
-
-
-
 }
-
-
 
 static USBH_StatusTypeDef USBH_HUB_UpdatePortsStatus(USBH_HandleTypeDef *phost)
 {
@@ -395,10 +390,8 @@ static USBH_StatusTypeDef USBH_HUB_DisconnectDevice(USBH_HandleTypeDef *phost, H
       if (Port->Interface[0].Pipe_in != 0 ) USBH_FreePipe(phost, Port->Interface[0].Pipe_in);
       if (Port->Interface[1].Pipe_in != 0 ) USBH_FreePipe(phost, Port->Interface[0].Pipe_in);
 
-
       USBH_memset(Port, 0, sizeof(HUB_Port_HandleTypeDef));
       
-
   return status;
 }
 
