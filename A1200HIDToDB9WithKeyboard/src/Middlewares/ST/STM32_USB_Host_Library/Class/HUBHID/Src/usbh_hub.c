@@ -244,15 +244,6 @@ static USBH_StatusTypeDef USBH_HUB_Process(USBH_HandleTypeDef *phost)
       {
         // Handle Connection / Enumeration
         status = USBH_HUB_Device_Enum(phost,&HUB_Handle->Port[HUB_Handle->portNumber-1]);
-   //     if (phost->Timer - HUB_Handle->Port[HUB_Handle->portNumber-1].EnumTime >500) 
-     //   {
-      //    HUB_Handle->Port[HUB_Handle->portNumber-1].EnumState = HUB_ENUM_INIT;
-      //    HUB_Handle->Port[HUB_Handle->portNumber-1].Reenumerate++;
-      //  }
-
-       /// if (HUB_Handle->Port[HUB_Handle->portNumber-1].Reenumerate == 5) status=USBH_OK;
-
-
         if (status==USBH_OK)
         {
           HUB_Handle->Port[HUB_Handle->portNumber-1].Connected = 0;

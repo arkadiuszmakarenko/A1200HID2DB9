@@ -5,6 +5,8 @@
 #include "stm32f4xx.h"
 #include "main.h"
 #include "utils.h"
+#include "usbh_hub_keybd.h"
+#include "usbh_hub_mouse.h"
 
 
 
@@ -948,17 +950,39 @@ void amikb_process_irq()
 void amikb_process()
 {
 HID_KEYBD_Info_TypeDef *kbdata ;
+HID_MOUSE_Info_TypeDef *mousedata;
 	if (Appli_state != APPLICATION_READY)
 		return;
 
-	if (USBH_HID_GetDeviceType(&hUsbHostFS) != HID_KEYBOARD)
-		return;
+	//if (USBH_HID_GetDeviceType(&hUsbHostFS) != HID_KEYBOARD)
+	//	return;
 
 
 
 	//HID_KEYBD_Info_TypeDef *USBH_HID_GetKeybdInfo(USBH_HandleTypeDef *phost)
-	kbdata = USBH_HID_GetKeybdInfo(&hUsbHostFS);
-		
+	
+	
+	//kbdata = USBH_HID_GetKeybdInfo(&hUsbHostFS);
+
+	USBH_HandleTypeDef *phost = (USBH_HandleTypeDef *) &hUsbHostFS;
+	HUB_HandleTypeDef *HUB_Handle  = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0]; 
+
+
+	HUB_Port_Interface_HandleTypeDef *Itf = (HUB_Port_Interface_HandleTypeDef *) &HUB_Handle->Port[2].Interface[0];
+	HUB_Port_Interface_HandleTypeDef *Itf2 = (HUB_Port_Interface_HandleTypeDef *) &HUB_Handle->Port[2].Interface[1];
+	
+
+	if (Itf->DeviceType != HUB_KEYBOARD) return;
+	kbdata = USBH_HUB_GetKeybdInfo(Itf);
+	mousedata = USBH_HUB_GetMouseInfo(Itf2);
+
+	if (mousedata =! 0x0)
+	{
+		uint8_t t;
+		t++;
+	}
+
+	return;
 		
 	if (kbdata == NULL) return; 
 

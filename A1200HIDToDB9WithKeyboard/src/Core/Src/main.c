@@ -46,7 +46,7 @@ int main(void)
 
     //ProcessMouse();
     //ProcessJoystick();
-    //amikb_process();
+    amikb_process();
 
 
 

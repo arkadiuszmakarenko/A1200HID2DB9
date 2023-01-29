@@ -4,6 +4,7 @@
 #include "usbh_hid_reportparser.h"
 #include "usbh_hub_keybd.h"
 #include "usbh_hub_mouse.h"
+#include "usbh_hub_gamepad.h"
 
 
 
@@ -95,19 +96,12 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
                     USBH_EP_CONTROL, (uint16_t)port->DevDesc.bMaxPacketSize);
 
             status = USBH_BUSY;
-            port->EnumState = HUB_ENUM_GET_FULL_DEV_DESC;
+            port->EnumState = HUB_ENUM_SET_ADDR;
         } 
 
     break;
 
-    case HUB_ENUM_GET_FULL_DEV_DESC:
-       status = USBH_HUB_Get_DevDesc(phost, port->DevDesc.bLength,port);
-        if (status == USBH_OK)
-        {
-            status = USBH_BUSY;
-            port->EnumState = HUB_ENUM_SET_ADDR;
-        }
-        break;
+
 
     case HUB_ENUM_SET_ADDR:
            status = USBH_SetAddress(phost,port->address);
@@ -124,9 +118,19 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
                     USBH_EP_CONTROL, (uint16_t)port->DevDesc.bMaxPacketSize);
 
             status = USBH_BUSY;
-            port->EnumState = HUB_ENUM_GET_CFG_DESC;
+            port->EnumState = HUB_ENUM_GET_FULL_DEV_DESC; //HUB_ENUM_GET_CFG_DESC;
            }
     break;
+
+        case HUB_ENUM_GET_FULL_DEV_DESC:
+       status = USBH_HUB_Get_DevDesc(phost, port->DevDesc.bLength,port);
+        if (status == USBH_OK)
+        {
+            status = USBH_BUSY;
+            port->EnumState = HUB_ENUM_GET_CFG_DESC;
+        }
+        break;
+
 
     case HUB_ENUM_GET_CFG_DESC:
           status = USBH_HUB_Get_CfgDesc(phost,USB_CONFIGURATION_DESC_SIZE,port);
@@ -169,9 +173,39 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
           if (status == USBH_OK)
           {
             status = USBH_BUSY;
-            port->EnumState = HUB_ENUM_GET_HID_DESC;
+            port->EnumState = HUB_ENUM_SET_CONFIGURATION;
           }
     break;
+
+
+    //ENABLE DEVICE
+
+        case HUB_ENUM_SET_CONFIGURATION:
+            status = USBH_SetCfg(phost, (uint16_t)port->CfgDesc.bConfigurationValue);
+            if (status == USBH_OK)
+            {
+                port->EnumState = HUB_ENUM_SET_WAKEUP_FEATURE;
+                status = USBH_BUSY;
+            }
+    break;
+
+      case HUB_ENUM_SET_WAKEUP_FEATURE:
+      if ((port->CfgDesc.bmAttributes) & (1U << 5))
+      {
+            status = USBH_SetFeature(phost, FEATURE_SELECTOR_REMOTEWAKEUP);
+            if (status == USBH_OK)
+            {
+                port->EnumState = HUB_ENUM_GET_HID_DESC;
+                status = USBH_BUSY;
+            }
+      }
+      else
+      {
+        port->EnumState = HUB_ENUM_GET_HID_DESC;
+        status = USBH_BUSY;
+      }
+    break;
+
 
 
     case HUB_ENUM_GET_HID_DESC:
@@ -184,6 +218,8 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
                     port->EnumState = HUB_ENUM_GET_HID_REPORT_DESC;
                 }
     break;
+
+
 
     case HUB_ENUM_GET_HID_REPORT_DESC:
 
@@ -200,7 +236,7 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
                 }
                 else
                 {
-			        port->EnumState = HUB_ENUM_SET_CONFIGURATION;
+			        port->EnumState = HUB_ENUM_SET_PROTOCOL;
                     status = USBH_BUSY;
                 }
 		    }
@@ -223,38 +259,19 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
             if (status == USBH_OK)
             {
 			    parse_report_descriptor(port->buff, port->HIDDesc[1].wItemLength, &port->HIDDesc[1].RptDesc);
-			    port->EnumState = HUB_ENUM_SET_CONFIGURATION;
+			    port->EnumState = HUB_ENUM_SET_PROTOCOL;
                 status = USBH_BUSY;
 		    }
     break;
 
-    case HUB_ENUM_SET_CONFIGURATION:
-            status = USBH_SetCfg(phost, (uint16_t)port->CfgDesc.bConfigurationValue);
-            if (status == USBH_OK)
-            {
-                port->EnumState = HUB_ENUM_SET_WAKEUP_FEATURE;
-                status = USBH_BUSY;
-            }
-    break;
 
 
-    case HUB_ENUM_SET_WAKEUP_FEATURE:
 
-      if ((port->CfgDesc.bmAttributes) & (1U << 5))
-      {
-            status = USBH_SetFeature(phost, FEATURE_SELECTOR_REMOTEWAKEUP);
-            if (status == USBH_OK)
-            {
-                port->EnumState = HUB_ENUM_SET_PROTOCOL;
-                status = USBH_BUSY;
-            }
-      }
-      else
-      {
-        port->EnumState = HUB_ENUM_SET_PROTOCOL;
-        status = USBH_BUSY;
-      }
-    break;
+
+
+
+
+
 
     case HUB_ENUM_SET_PROTOCOL:
             status = USBH_HID_SetProtocol(phost, 1U, 0U);
@@ -358,13 +375,28 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
 
         if ((port->CfgDesc.Itf_Desc[0].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[0].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[0].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE ) || (port->HIDDesc[0].RptDesc.type == REPORT_TYPE_KEYBOARD))
         {       
-            USBH_HUB_KeybdInit(phost,port,&port->Interface[0]);
+            USBH_HUB_KeybdInit(&port->Interface[0]);
         }
 
         if ((port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[0].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[0].bInterfaceProtocol == HID_MOUSE_BOOT_CODE )|| (port->HIDDesc[0].RptDesc.type == REPORT_TYPE_MOUSE))
         {       
-            USBH_HUB_MouseInit(phost,port,&port->Interface[0]);
+            port->Interface[0].length = port->HIDDesc[0].RptDesc.report_size + (port->HIDDesc[0].RptDesc.report_id?1:0);
+            port->Interface[0].HIDDesc = &port->HIDDesc[0];
+            USBH_HUB_MouseInit(&port->Interface[0]);
         }
+
+        if (port->HIDDesc[0].RptDesc.type == REPORT_TYPE_JOYSTICK)
+        {       
+            port->Interface[0].length = port->HIDDesc[0].RptDesc.report_size + (port->HIDDesc[0].RptDesc.report_id?1:0);
+            port->Interface[0].HIDDesc = &port->HIDDesc[0];
+            USBH_HUB_GamepadInit(&port->Interface[0]);
+        }
+
+
+		
+
+
+
 
         if (port->CfgDesc.bNumInterfaces>1)
         {
@@ -400,12 +432,21 @@ USBH_StatusTypeDef USBH_HUB_Device_Enum(USBH_HandleTypeDef *phost, HUB_Port_Hand
 
         if ((port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[1].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[1].bInterfaceProtocol == HID_KEYBRD_BOOT_CODE) || (port->HIDDesc[1].RptDesc.type == REPORT_TYPE_KEYBOARD))
         {       
-            USBH_HUB_KeybdInit(phost,port,&port->Interface[1]);
+            USBH_HUB_KeybdInit(&port->Interface[1]);
         }
 
         if ((port->CfgDesc.Itf_Desc[1].bInterfaceClass == 0x03 && port->CfgDesc.Itf_Desc[1].bInterfaceSubClass == 0x01 && port->CfgDesc.Itf_Desc[1].bInterfaceProtocol == HID_MOUSE_BOOT_CODE ) || (port->HIDDesc[1].RptDesc.type == REPORT_TYPE_MOUSE))
         {       
-            USBH_HUB_MouseInit(phost,port,&port->Interface[1]);
+            port->Interface[1].length = port->HIDDesc[1].RptDesc.report_size + (port->HIDDesc[1].RptDesc.report_id?1:0);
+            port->Interface[1].HIDDesc = &port->HIDDesc[1];
+            USBH_HUB_MouseInit(&port->Interface[1]);
+        }
+
+
+        if (port->HIDDesc[1].RptDesc.type == REPORT_TYPE_JOYSTICK)
+        {       
+            port->Interface[1].length = port->HIDDesc[1].RptDesc.report_size + (port->HIDDesc[1].RptDesc.report_id?1:0);
+            USBH_HUB_GamepadInit(&port->Interface[1]);
         }
 
     		port->EnumState = HUB_ENUM_READY;
@@ -481,7 +522,7 @@ uint8_t portNumber = HUB_Handle->current_port_number ;
 
                         if (Itf->DataReady == 0U && XferSize != 0U) 
                         { 
-                            USBH_HID_FifoWrite(&Itf->fifo, Itf->pFIFObuf, Itf->length);
+                            USBH_HID_FifoWrite(&Itf->fifo, Itf->pData, Itf->length);
 				            Itf->DataReady = 1U;
                             
                             Itf->state = HUB_DEVICE_GET_DATA;

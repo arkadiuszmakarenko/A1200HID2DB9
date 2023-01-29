@@ -136,7 +136,7 @@ USBH_StatusTypeDef USBH_HID_GamepadInit(USBH_HandleTypeDef *phost)
 
   HID_Handle->pData = (uint8_t*) malloc (reportSize *sizeof(uint8_t)); //(uint8_t*)(void *)
   gamepad_report_data = HID_Handle->pData;
-  USBH_HID_FifoInit(&HID_Handle->fifo, phost->device.Data, HID_QUEUE_SIZE * reportSize);
+  USBH_HID_FifoInit(&HID_Handle->fifo, gamepad_report_data, HID_QUEUE_SIZE * reportSize);
 
   return USBH_OK;
 }

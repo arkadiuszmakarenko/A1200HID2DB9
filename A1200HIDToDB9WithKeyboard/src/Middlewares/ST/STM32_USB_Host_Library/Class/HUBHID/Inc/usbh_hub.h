@@ -141,12 +141,21 @@ typedef struct __attribute__ ((packed)) _USB_HUB_PORT_STATUS
 
 } USB_HUB_PORT_STATUS;
 
+typedef enum
+{
+  HUB_NONE = 0,
+  HUB_KEYBOARD,
+  HUB_MOUSE,
+  HUB_GAMEPAD
+
+} HUB_DEVICETypeDef;
+
+
 typedef struct _HUB_Port_Interface_Process
 {
   uint8_t                           Id;
+  HUB_DEVICETypeDef                 DeviceType;
   uint8_t                           Pipe_in;
- // uint8_t                           Pipe_out;
- // uint8_t                           OutEp;
   uint8_t                           InEp;
   HUB_PORT_StateTypeDef             state;
   uint16_t                          length;
@@ -158,6 +167,7 @@ typedef struct _HUB_Port_Interface_Process
   uint8_t                           pData[64];
   FIFO_TypeDef                      fifo;
   uint8_t                           *pFIFObuf;
+  HID_DescTypeDef                   *HIDDesc;
 
 }
 HUB_Port_Interface_HandleTypeDef;

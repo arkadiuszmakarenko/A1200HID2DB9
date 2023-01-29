@@ -7,9 +7,9 @@
 #include "usbh_hub.h"
 
 
-HID_MOUSE_Info_TypeDef *USBH_HUB_GetMouseInfo(USBH_HandleTypeDef *phost);
-USBH_StatusTypeDef USBH_HUB_MouseInit(USBH_HandleTypeDef *phost,HUB_Port_HandleTypeDef *port,HUB_Port_Interface_HandleTypeDef *Itf);
-USBH_StatusTypeDef USBH_HUB_MouseDecode(USBH_HandleTypeDef *phost);
+HID_MOUSE_Info_TypeDef *USBH_HUB_GetMouseInfo(HUB_Port_Interface_HandleTypeDef *Itf);
+USBH_StatusTypeDef USBH_HUB_MouseInit(HUB_Port_Interface_HandleTypeDef *Itf);
+USBH_StatusTypeDef USBH_HUB_MouseDecode(HUB_Port_Interface_HandleTypeDef *Itf);
 
 #endif /* __USBH_HUB_KEYBD_H */
 
