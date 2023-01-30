@@ -465,6 +465,9 @@ uint8_t portNumber = HUB_Handle->current_port_number ;
 				            Itf->DataReady = 1U;
                             
                             Itf->state = HUB_DEVICE_GET_DATA;
+
+                            USBH_Next_Interface_Port(phost,port);
+
                             break;
                         }
 			        }

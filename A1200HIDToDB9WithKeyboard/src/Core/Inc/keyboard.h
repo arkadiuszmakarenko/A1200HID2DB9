@@ -42,7 +42,4 @@ void amikb_reset(void);
 
 
 
-extern ApplicationTypeDef Appli_state;
-extern USBH_HandleTypeDef hUsbHostFS;
-extern HID_KEYBD_Info_TypeDef *USBH_HID_GetKeybdInfo(USBH_HandleTypeDef *phost);
 #endif

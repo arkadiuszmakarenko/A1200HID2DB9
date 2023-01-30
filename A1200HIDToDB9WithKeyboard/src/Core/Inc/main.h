@@ -30,6 +30,8 @@ extern "C" {
 #include "stm32f4xx_hal.h"
 
 
+
+
 void delay_us (uint16_t us);
 
 /* Private includes ----------------------------------------------------------*/
@@ -41,6 +43,9 @@ extern void ProcessY_IRQ();
 extern void amikb_process_irq();
 extern void amikb_process();
 extern void amikb_init();
+
+
+
 
 /* USER CODE END Includes */
 

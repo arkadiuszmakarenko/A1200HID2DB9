@@ -302,42 +302,8 @@ static USBH_StatusTypeDef USBH_HUB_SOFProcess(USBH_HandleTypeDef *phost)
         {
           Itf->state = HUB_DEVICE_GET_DATA;
 
-          //CHECK IF NEXT INTERFACE NEED TO BE HANDLED
-          if(port->CfgDesc.bNumInterfaces>1)
-          {
-             //NEXT INTERFACE
-              if(HUB_Handle->current_Itf_number == 0)
-              {
-                HUB_Handle->current_Itf_number = 1;
-              }
-              else
-              {
-                //ALREADY DONE BOTH INTERFACES RESET INTERFACE AND SELECT NEXT PORT
-                HUB_Handle->current_Itf_number = 0;
 
-                if(HUB_Handle->current_port_number ==3)
-                {
-                  HUB_Handle->current_port_number = 0;
-                }
-                else
-                {
-                  HUB_Handle->current_port_number++;
-                }
-              }
-          } else
-          {
-            //NO MORE INTERFACES SELECT NEXT PORT
-                if(HUB_Handle->current_port_number ==3)
-                {
-                  HUB_Handle->current_port_number = 0;
-                }
-                else
-                {
-                  HUB_Handle->current_port_number++;
-                }
-
-          }
-
+          USBH_Next_Interface_Port(phost,port);
 
 
         }
@@ -384,6 +350,46 @@ static USBH_StatusTypeDef USBH_HUB_DisconnectDevice(USBH_HandleTypeDef *phost, H
       USBH_memset(Port, 0, sizeof(HUB_Port_HandleTypeDef));
       
   return status;
+}
+
+void USBH_Next_Interface_Port(USBH_HandleTypeDef *phost,HUB_Port_HandleTypeDef *port)
+{
+    HUB_HandleTypeDef *HUB_Handle  = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0]; 
+
+          //CHECK IF NEXT INTERFACE NEED TO BE HANDLED
+          if(port->CfgDesc.bNumInterfaces>1)
+          {
+             //NEXT INTERFACE
+              if(HUB_Handle->current_Itf_number == 0)
+              {
+                HUB_Handle->current_Itf_number = 1;
+              }
+              else
+              {
+                //ALREADY DONE BOTH INTERFACES RESET INTERFACE AND SELECT NEXT PORT
+                HUB_Handle->current_Itf_number = 0;
+
+                if(HUB_Handle->current_port_number ==3)
+                {
+                  HUB_Handle->current_port_number = 0;
+                }
+                else
+                {
+                  HUB_Handle->current_port_number++;
+                }
+              }
+          } else
+          {
+            //NO MORE INTERFACES SELECT NEXT PORT
+                if(HUB_Handle->current_port_number ==3)
+                {
+                  HUB_Handle->current_port_number = 0;
+                }
+                else
+                {
+                  HUB_Handle->current_port_number++;
+                }
+          }
 }
 
 

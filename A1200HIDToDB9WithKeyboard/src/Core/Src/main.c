@@ -3,6 +3,8 @@
 #include "tim.h"
 #include "usb_host.h"
 #include "gpio.h"
+#include "utils.h"
+
 
 void SystemClock_Config(void);
 void MX_USB_HOST_Process(void);
@@ -34,20 +36,13 @@ int main(void)
   amikb_init();
 
 
-
-
-
   /* Infinite loop */
   while (1)
   {
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
-
-    //ProcessMouse();
-    //ProcessJoystick();
     amikb_process();
-
 
 
 
@@ -57,11 +52,8 @@ int main(void)
 
 
 
-void delay_us (uint16_t us)
-{
-	__HAL_TIM_SET_COUNTER(&htim11,0);  // set the counter value a 0
-	while (__HAL_TIM_GET_COUNTER(&htim11) < us);  // wait for the counter to reach the us input in the parameter
-}
+
+
 
 
 /**

@@ -25,7 +25,7 @@ GCC_FLAGS   += -O0 -g -ggdb
 endif
 
 ifeq ($(DEBUG), 0)
-GCC_FLAGS   += -Os
+GCC_FLAGS   += -O3
 endif
 
 SRCDIR      := src

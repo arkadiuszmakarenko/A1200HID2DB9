@@ -227,6 +227,6 @@ typedef struct _HUB_Process
 HUB_HandleTypeDef;
 
 
-
+void USBH_Next_Interface_Port(USBH_HandleTypeDef *phost,HUB_Port_HandleTypeDef *port);
 
 #endif /* __USBH_HID_H */

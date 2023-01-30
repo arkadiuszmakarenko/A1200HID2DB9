@@ -1,5 +1,5 @@
 #include "utils.h"
-
+#include "usbh_hub.h"
 
 void FifoInit(FIFO_Utils_TypeDef *f, uint8_t *buf, uint16_t size)
 {
@@ -91,3 +91,46 @@ uint16_t FifoWrite(FIFO_Utils_TypeDef *f, void *buf, uint16_t  nbytes)
 
   return nbytes;
 }
+
+
+
+void delay_us (uint16_t us)
+{
+	__HAL_TIM_SET_COUNTER(&htim11,0);  // set the counter value a 0
+	while (__HAL_TIM_GET_COUNTER(&htim11) < us);  // wait for the counter to reach the us input in the parameter
+}
+
+
+
+
+
+//Finds first port and first interface with Keyboard data, and returns it HID_KEYBD_Info_TypeDef
+HID_KEYBD_Info_TypeDef *USBH_Get_Keyboard_Data()
+{
+
+  USBH_HandleTypeDef *phost = &hUsbHostFS;
+  HUB_HandleTypeDef *HUB_Handle  = (HUB_HandleTypeDef *) phost->pActiveClass->pData[0]; 
+
+  if (phost->device.DevDesc.bDeviceClass == 9 && Appli_state == APPLICATION_READY)
+  {
+
+    for (int port = 0; port <4; port++)
+    {
+      for (int interface = 0; interface <2; interface ++)
+      {
+        if (HUB_Handle->Port[port].Interface[interface].DeviceType == HUB_KEYBOARD)
+        {
+
+          return USBH_HUB_GetKeybdInfo(&HUB_Handle->Port[port].Interface[interface]);
+        }
+      }
+
+
+    }
+    
+  }
+
+return NULL;
+}
+
+
