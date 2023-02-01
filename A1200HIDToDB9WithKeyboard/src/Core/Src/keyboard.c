@@ -949,7 +949,7 @@ void amikb_process_irq()
 
 void amikb_process()
 {
-	HID_KEYBD_Info_TypeDef *kbdata = USBH_Get_Keyboard_Data();
+	HID_KEYBD_Info_TypeDef *kbdata = (HID_KEYBD_Info_TypeDef *)USBH_Get_Device_Data(HUB_KEYBOARD);
 
 	if (kbdata == NULL) return; 
 

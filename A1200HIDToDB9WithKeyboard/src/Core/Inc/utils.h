@@ -21,7 +21,7 @@ uint16_t FifoWrite(FIFO_Utils_TypeDef *f, void *buf, uint16_t  nbytes);
 uint16_t FifoRead(FIFO_Utils_TypeDef *f, void *buf, uint16_t nbytes);
 void FifoInit(FIFO_Utils_TypeDef *f, uint8_t *buf, uint16_t size);
 void delay_us (uint16_t us);
-HID_KEYBD_Info_TypeDef *USBH_Get_Keyboard_Data();
+uint8_t *USBH_Get_Device_Data(HUB_DEVICETypeDef DeviceType);
 
 
 extern USBH_HandleTypeDef hUsbHostFS;
