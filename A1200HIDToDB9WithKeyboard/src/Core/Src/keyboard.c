@@ -900,6 +900,8 @@ void amikb_process_irq()
 	}
 
 
+	while(1)
+	{
 
 
 	//load keycode from buffer
@@ -944,6 +946,8 @@ void amikb_process_irq()
 	}
 	delay_us(10);
 	HAL_GPIO_WritePin(KBD_DATA_GPIO_Port, KBD_DATA_Pin, GPIO_PIN_SET); // Set KBD_DATA pin
+	delay_us(100);
+	}
 }
 
 
