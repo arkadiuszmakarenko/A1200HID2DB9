@@ -1,4 +1,5 @@
 #include "mouse.h"
+#include "utils.h"
 
 ApplicationTypeDef aState;
 
@@ -123,18 +124,10 @@ uint8_t processMouseMovement(int8_t movementUnits, uint8_t axis, int limitRate,
 }
 
 void ProcessMouse() {
-
-	if (Appli_state != APPLICATION_READY)
-		return;
-
-	if (USBH_HID_GetDeviceType(&hUsbHostFS) != HID_MOUSE)
-		return;
+	HID_MOUSE_Info_TypeDef *mousemap = (HID_MOUSE_Info_TypeDef *)USBH_Get_Device_Data(HUB_MOUSE);
 
 
-
-
-	mousemap = USBH_HID_GetMouseInfo(&hUsbHostFS);
-	if (mousemap != NULL) {
+	if (mousemap == NULL) return; 
 		// +X = Mouse going right
 		// -X = Mouse going left
 		// +Y = Mouse going down
@@ -187,7 +180,7 @@ void ProcessMouse() {
 		HAL_GPIO_WritePin(LB_GPIO_Port, LB_Pin, !(mousemap->buttons[0]));
 		HAL_GPIO_WritePin(MB_GPIO_Port, RB_Pin, !(mousemap->buttons[1]));
 		HAL_GPIO_WritePin(RB_GPIO_Port, MB_Pin, !(mousemap->buttons[2]));
-	}
+	
 }
 
 void ProcessX_IRQ() {

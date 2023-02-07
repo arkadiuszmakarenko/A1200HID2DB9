@@ -4,6 +4,7 @@
 //#include "usbh_hid_gamepad.h"
 #include "usbh_hid_mouse.h"
 #include "stm32f4xx_hal_tim.h"
+#include "utils.h"
 
 HID_gamepad_Info_TypeDef* joymap;
 

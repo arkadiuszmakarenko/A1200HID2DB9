@@ -125,8 +125,9 @@ uint8_t *USBH_Get_Device_Data(HUB_DEVICETypeDef deviceType)
       {
         if (HUB_Handle->Port[port].Interface[interface].DeviceType == deviceType)
         {
-
-          return (uint8_t *)USBH_HUB_GetKeybdInfo(&HUB_Handle->Port[port].Interface[interface]);
+            if (deviceType == HUB_KEYBOARD) return (uint8_t *)USBH_HUB_GetKeybdInfo(&HUB_Handle->Port[port].Interface[interface]);
+            if (deviceType == HUB_MOUSE)    return (uint8_t *)USBH_HUB_GetMouseInfo(&HUB_Handle->Port[port].Interface[interface]);
+            if (deviceType == HUB_GAMEPAD)  return (uint8_t *)USBH_HUB_GetGamepadInfo(&HUB_Handle->Port[port].Interface[interface]);
         }
       }
 

@@ -2,6 +2,8 @@
 #include "usb_host.h"
 #include "usbh_hid.h"
 #include "usbh_hub_keybd.h"
+#include "usbh_hub_mouse.h"
+#include "usbh_hub_gamepad.h"
 
 
 

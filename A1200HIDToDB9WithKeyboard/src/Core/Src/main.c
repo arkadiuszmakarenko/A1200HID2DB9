@@ -18,7 +18,6 @@ int main(void)
 
 
 
-  HAL_Init();
   SystemClock_Config();
 
   MX_GPIO_Init();
@@ -39,29 +38,15 @@ int main(void)
   /* Infinite loop */
   while (1)
   {
-    /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
-    /* USER CODE BEGIN 3 */
+
    ProcessMouse();
    ProcessJoystick();
    amikb_process();
   }
-  /* USER CODE END 3 */
+
 }
-   
-
-
-
-   }
-
-}    
-
-
-
-
-
-
 
 /**
   * @brief System Clock Configuration

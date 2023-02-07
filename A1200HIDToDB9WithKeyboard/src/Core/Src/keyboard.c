@@ -909,8 +909,8 @@ void amikb_process_irq()
 
 	if(hasValue == 0) //we have reached end of buffer stop TIM IRQ
 	{
-		HAL_TIM_Base_Stop_IT(&htim4);
-		__HAL_TIM_CLEAR_IT(&htim4,TIM_IT_UPDATE);
+//		HAL_TIM_Base_Stop_IT(&htim4);
+//		__HAL_TIM_CLEAR_IT(&htim4,TIM_IT_UPDATE);
 		return;
 	}
 
@@ -919,9 +919,9 @@ void amikb_process_irq()
 
 	// pulse the data line and wait for about 100us
 	HAL_GPIO_WritePin(KBD_DATA_GPIO_Port, KBD_DATA_Pin, GPIO_PIN_RESET); // KBD_DATA pin is LOW
-	delay_us(10);
+	delay_us(100);
 	HAL_GPIO_WritePin(KBD_DATA_GPIO_Port, KBD_DATA_Pin, GPIO_PIN_SET); // KBD_DATA pin is HIGH
-	delay_us(10);
+	delay_us(100);
 
 	for (i = 0; i < 8; i++)
 	{
@@ -937,14 +937,14 @@ void amikb_process_irq()
 			HAL_GPIO_WritePin(KBD_DATA_GPIO_Port, KBD_DATA_Pin, GPIO_PIN_SET);
 		}
 		keycode <<= 1;
-		delay_us(5);
+		delay_us(10);
 		/* pulse the clock */
 		HAL_GPIO_WritePin(KBD_CLOCK_GPIO_Port, KBD_CLOCK_Pin, GPIO_PIN_RESET); // Clear KBD_CLOCK pin
-		delay_us(5);
+		delay_us(10);
 		HAL_GPIO_WritePin(KBD_CLOCK_GPIO_Port, KBD_CLOCK_Pin, GPIO_PIN_SET); // Set KBD_CLOCK pin
-		delay_us(5);
+		delay_us(10);
 	}
-	delay_us(10);
+	delay_us(100);
 	HAL_GPIO_WritePin(KBD_DATA_GPIO_Port, KBD_DATA_Pin, GPIO_PIN_SET); // Set KBD_DATA pin
 	delay_us(100);
 	}
@@ -1101,8 +1101,6 @@ void amikb_process()
 		}
 
 	HAL_TIM_Base_Start_IT(&htim4); //start timer to process buffer content
-
-
 }
 
 static void upper_string(char s[])
