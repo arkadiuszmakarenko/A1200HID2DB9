@@ -1,4 +1,5 @@
 # A1200HID2DB9
-Board for ReAmiga1200 and firmware for F401s
+4 Layer PCB Board for ReAmiga1200 and firmware for CH32V203C
 
-![Board](https://user-images.githubusercontent.com/5903872/208322493-e3c074d5-beb5-4e16-be5c-ecb684bc1d2f.png)
+![image](https://github.com/arkadiuszmakarenko/A1200HID2DB9/assets/5903872/60f71020-0ec5-4858-9302-5b9604e60419)
+
