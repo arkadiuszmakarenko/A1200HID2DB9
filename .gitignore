@@ -59,7 +59,7 @@ A1200HIDToDB9WithKeyboard/.vscode/STM32F401.svd
 A1200HIDToDB9WithKeyboard/.vscode/tasks.json
 A1200HIDToDB9WithKeyboard/.vscode/.cortex-debug.registers.state.json
 A1200HIDToDB9WithKeyboard/bin/*
-
+A1200HIDToDB9WithKeyboard/obj/*
 
 
 
