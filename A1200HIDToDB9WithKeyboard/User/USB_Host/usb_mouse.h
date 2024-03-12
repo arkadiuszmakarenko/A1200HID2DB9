@@ -10,6 +10,7 @@ typedef struct _HID_MOUSE_Info
   int16_t              x;
   int16_t              y;
   int8_t              buttons[3];
+  int16_t             wheel;
 }
 HID_MOUSE_Info_TypeDef;
 

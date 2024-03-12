@@ -1598,9 +1598,24 @@ void USBH_MainDeal( void )
                                                 &HostCtl[ index ].Interface[ intf_num ].InEndpTog[ in_num ], Com_Buf, &len );
                         if( s == ERR_SUCCESS )
                         {
+
+                        	//Add value to circular
+                        	HostCtl[ index ].Interface[ intf_num ].HidRptLen = len;
+                        	FifoWrite(&HostCtl[ index ].Interface[ intf_num ].buffer, &Com_Buf, len);
+
 #if DEF_DEBUG_PRINTF
+                        	DUG_PRINTF("Index:%x \r\n",index );
+                        	DUG_PRINTF("Buffer head%x \r\n", HostCtl[ index ].Interface[ intf_num ].buffer.head);
+                        	DUG_PRINTF("Buffer tail%x \r\n", HostCtl[ index ].Interface[ intf_num ].buffer.tail);
+
+                        	DUG_PRINTF("Interface type:%x \r\n", HostCtl[ index ].Interface[ intf_num ].HIDRptDesc.type);
+
+                        	DUG_PRINTF("Len:%x \r\n", len);
+
+
                             for( i = 0; i < len; i++ )
                             {
+
                                 DUG_PRINTF( "%02x ", Com_Buf[ i ] );
                             }
                             DUG_PRINTF( "\r\n" );
@@ -1649,7 +1664,8 @@ void USBH_MainDeal( void )
                                     s = USBH_EnumHidDevice( index, RootHubDev.bEp0MaxPks );
                                     if( s == ERR_SUCCESS )
                                     {
-                                        RootHubDev.bStatus = ROOT_DEV_SUCCESS;
+                                        RootHubDev.bStatus = ROOT_DEV_SUCCESS; 
+                                        GPIO_WriteBit(LED_GPIO_Port,LED_Pin, Bit_RESET);
                                     }
                                     else if( s != ERR_USB_DISCON )
                                     {
@@ -1748,8 +1764,9 @@ void USBH_MainDeal( void )
                                                            RootHubDev.Device[ hub_port ].bEp0MaxPks );
                                    if( s == ERR_SUCCESS )
                                    {
-                                       RootHubDev.Device[ hub_port ].bStatus = ROOT_DEV_SUCCESS;
-                                       DUG_PRINTF( "OK!\r\n" );
+                                        RootHubDev.Device[ hub_port ].bStatus = ROOT_DEV_SUCCESS;
+					GPIO_WriteBit(LED_GPIO_Port,LED_Pin, Bit_RESET);                                       
+					DUG_PRINTF( "OK!\r\n" );
                                    }
                                }
                                else // Detect that this device is a Non-HID device
@@ -1777,6 +1794,7 @@ void USBH_MainDeal( void )
                            {
                                RootHubDev.Device[ hub_port ].bStatus = ROOT_DEV_FAILED;
                                DUG_PRINTF( "HUB Port%x Enum Err!\r\n", hub_port );
+			       GPIO_WriteBit(LED_GPIO_Port,LED_Pin, Bit_SET);
                            }
                        }
                    }

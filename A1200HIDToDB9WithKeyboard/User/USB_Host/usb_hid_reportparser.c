@@ -90,6 +90,7 @@ int parse_report_descriptor(uint8_t *rep, uint16_t rep_size,hid_report_t *conf) 
   int8_t axis[2] = { -1, -1};
   uint8_t btns = 0;
   int8_t hat = -1;
+  int8_t wheel = -1;
 
 
   while(rep_size) {
@@ -200,6 +201,19 @@ int parse_report_descriptor(uint8_t *rep, uint16_t rep_size,hid_report_t *conf) 
            	      conf->joystick_mouse.hat.offset = cnt;
            	      conf->joystick_mouse.hat.size = report_size;
            	    }
+           	  }
+
+           	  // handle found wheel
+           	  if (wheel >=0){
+           	     uint16_t cnt = bit_count + report_size * wheel;
+           	     if(conf->type == REPORT_TYPE_MOUSE) {
+           	         conf->joystick_mouse.wheel.offset = cnt;
+           	         conf->joystick_mouse.wheel.logical.min = logical_minimum;
+           	         conf->joystick_mouse.wheel.logical.max = logical_maximum;
+           	         conf->joystick_mouse.wheel.size = report_size;
+           	     }
+
+
            	  }
 
 
@@ -359,7 +373,19 @@ int parse_report_descriptor(uint8_t *rep, uint16_t rep_size,hid_report_t *conf) 
            	     // hidp_extreme_debugf("JOYSTICK: found hat @ %d", usage_count);
            	      hat = usage_count;
            	    }
-           	  } else {
+           	  }
+
+           	else if((value == USAGE_WHEEL) && app_collection) {
+           	                // usage(wheel) is allowed within the app collection
+
+           	                if(conf->type == REPORT_TYPE_MOUSE) {
+           	                 // hidp_extreme_debugf("JOYSTICK: found hat @ %d", usage_count);
+           	                  wheel = usage_count;
+           	                }
+           	              }
+
+
+           	  else {
 
            	  }
 

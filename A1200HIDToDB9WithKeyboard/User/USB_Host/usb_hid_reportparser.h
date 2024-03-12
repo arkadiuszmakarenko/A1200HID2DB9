@@ -37,6 +37,15 @@ typedef struct {
 				uint8_t size;
       } hat;                   // 1 hat (joystick only)
 
+      struct {
+                uint16_t offset;
+                uint8_t size;
+                struct {
+                    uint16_t min;
+                    uint16_t max;
+                } logical;
+      } wheel;
+
 			uint8_t button_count;
 
     } joystick_mouse;

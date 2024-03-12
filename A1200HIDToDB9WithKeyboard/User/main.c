@@ -26,7 +26,10 @@
  */
 
 /*******************************************************************************/
-/* Header Files */
+/* Header File */
+#include <usb_gamepad.h>
+#include <usb_mouse.h>
+#include <usb_keyboard.h>
 #include "usb_host_config.h"
 #include "utils.h"
 #include "tim.h"
@@ -63,18 +66,16 @@ int main( void )
     memset( &HostCtl[ DEF_USBFS_PORT_INDEX * DEF_ONE_USB_SUP_DEV_TOTAL ].InterfaceNum, 0, DEF_ONE_USB_SUP_DEV_TOTAL * sizeof( HOST_CTL ) );
 #endif
 
-	TIM2_Init();
-	Delay_Init();
-#if DEF_DEBUG_PRINTF
-	DUG_PRINTF("TIM2 Init OK!\r\n");
-#endif
-	TIM4_Init();
-	DUG_PRINTF("TIM4 Init OK!\r\n");
-	Delay_Init();
-#if DEF_DEBUG_PRINTF
+    TIM2_Init();
+    TIM4_Init();
+    Delay_Init();
+    GPIO_Config();
+    InitMouse();
 
+#if DEF_DEBUG_PRINTF
+	DUG_PRINTF("TIM2,4 Delay, GPIO and Mouse Init OK!\r\n");
 #endif
-	GPIO_Config();
+
 
 	while (1) {
 		USBH_MainDeal();

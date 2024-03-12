@@ -41,6 +41,7 @@ USBH_StatusTypeDef USBH_MouseDecode(Interface *Itf)
 	  uint8_t btn_extra = 0;
 	  int16_t a[2];
 	  uint8_t i;
+	  int16_t wheelVal;
 
 
 
@@ -69,6 +70,14 @@ USBH_StatusTypeDef USBH_MouseDecode(Interface *Itf)
 	  	if(p[Itf->HIDRptDesc.joystick_mouse.button[i].byte_offset] &
 	  			Itf->HIDRptDesc.joystick_mouse.button[i].bitmask) btn_extra |= (1<<(i-4));
 
+	  // process wheel
+      int is_signed_wheel = Itf->HIDRptDesc.joystick_mouse.wheel.logical.min >
+            Itf->HIDRptDesc.joystick_mouse.wheel.logical.max;
+          wheelVal = collect_bits(p, Itf->HIDRptDesc.joystick_mouse.wheel.offset,
+                Itf->HIDRptDesc.joystick_mouse.wheel.size, is_signed_wheel);
+
+
+
 	  //process mouse
 	  if(Itf->HIDRptDesc.type == REPORT_TYPE_MOUSE) {
 	  		// iprintf("mouse %d %d %x\n", (int16_t)a[0], (int16_t)a[1], btn);
@@ -77,12 +86,17 @@ USBH_StatusTypeDef USBH_MouseDecode(Interface *Itf)
 	  		if((int16_t)a[i] >  127) a[i] =  127;
 	  		if((int16_t)a[i] < -128) a[i] = -128;
 	  		}
+
+	  		if((int16_t)wheelVal >  127) wheelVal =  127;
+	  		if((int16_t)wheelVal< -128) wheelVal = -128;
+
 	  		//btn
 	  	  mouse_info.x = a[0];
 	  	  mouse_info.y = a[1];
 	  	  mouse_info.buttons[0] = btn&0x1;
 	  	  mouse_info.buttons[1] = (btn>>1)&0x1;
 	  	  mouse_info.buttons[2] = (btn>>2)&0x1;
+	  	  mouse_info.wheel = wheelVal;
 	  	}
     return USBH_OK;
   }

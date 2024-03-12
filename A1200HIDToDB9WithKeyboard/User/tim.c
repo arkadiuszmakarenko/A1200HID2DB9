@@ -17,7 +17,7 @@ void TIM2_Init( void )
 
     /* Initialize Timer2 */
     TIM_TimeBaseStructure.TIM_Period = 1000;
-    TIM_TimeBaseStructure.TIM_Prescaler = 4608-1;
+    TIM_TimeBaseStructure.TIM_Prescaler = 18720-1;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit( TIM2, &TIM_TimeBaseStructure );
@@ -50,7 +50,7 @@ void TIM4_Init( void )
 
     /* Initialize Timer4 */
     TIM_TimeBaseStructure.TIM_Period = 1000;
-    TIM_TimeBaseStructure.TIM_Prescaler = 4608-1;
+    TIM_TimeBaseStructure.TIM_Prescaler = 18720-1;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit( TIM4, &TIM_TimeBaseStructure );

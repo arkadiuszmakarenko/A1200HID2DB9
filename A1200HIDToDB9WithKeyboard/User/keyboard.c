@@ -568,7 +568,7 @@ void amikb_startup(void)
 	uint8_t AMIGA_TERMPOWER = 0xFE; //11111110
 	Delay_Us(200);
 	// De-assert nRESET for Amiga...
-   	amikb_reset();
+   	//amikb_reset();
    	Delay_Us(200);           // wait for sync
 	amikb_send((uint8_t) AMIGA_INITPOWER, 0); // send "initiate power-up"
 	Delay_Us(200);
@@ -767,9 +767,9 @@ static led_status_t amikb_send(uint8_t keycode, int press)
 // **************************
 void amikb_reset(void)
 {
-	GPIO_WriteBit(KBD_CLOCK_GPIO_Port, KBD_CLOCK_Pin, Bit_RESET); // Clear KBD_CLOCK pin
-	Delay_Ms(600);
-	GPIO_WriteBit(KBD_CLOCK_GPIO_Port, KBD_CLOCK_Pin, Bit_SET);   // Set KBD_CLOCK pin
+    GPIO_WriteBit(KB_RESET_GPIO_Port, KB_RESET_GPIO_Pin, Bit_RESET);
+	Delay_Ms(500);
+    GPIO_WriteBit(KB_RESET_GPIO_Port, KB_RESET_GPIO_Pin, Bit_SET);
 	prev_keycode = 0xff;
 	capslk = 0;
 	numlk = 0;
