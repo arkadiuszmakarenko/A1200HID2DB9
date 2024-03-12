@@ -767,10 +767,14 @@ static led_status_t amikb_send(uint8_t keycode, int press)
 // **************************
 void amikb_reset(void)
 {
-    GPIO_WriteBit(KB_RESET_GPIO_Port, KB_RESET_GPIO_Pin, Bit_RESET);
-	Delay_Ms(500);
+    int8_t var;
+    for (var = 0; var < 10; ++var) {
+        GPIO_WriteBit(KB_RESET_GPIO_Port, KB_RESET_GPIO_Pin, Bit_RESET);
+    }
+
     GPIO_WriteBit(KB_RESET_GPIO_Port, KB_RESET_GPIO_Pin, Bit_SET);
-	prev_keycode = 0xff;
+
+    prev_keycode = 0xff;
 	capslk = 0;
 	numlk = 0;
 	scrolllk = 0;
