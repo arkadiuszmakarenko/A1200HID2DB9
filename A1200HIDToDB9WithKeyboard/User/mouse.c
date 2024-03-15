@@ -28,9 +28,7 @@ void InitMouse()
 uint8_t processMouseMovement(int8_t movementUnits, uint8_t axis, int limitRate,
 		int dpiDivide) {
 
-#if DEF_DEBUG_PRINTF
-    DUG_PRINTF("MOUSE Process Movement!\r\n");
-#endif
+
 
 
 	uint16_t timerTopValue = 0;
@@ -166,9 +164,7 @@ void ProcessMouse(HID_MOUSE_Info_TypeDef *mousemap) {
 		// If the mouse movement changes direction then disregard any remaining
 		// movement units in the previous direction.
 
-#if DEF_DEBUG_PRINTF
-    DUG_PRINTF("MOUSE Process mouse!\r\n");
-#endif
+
 
 		if (mousemap->x > 0 && mouseDirectionX == 0) {
 			mouseDistanceX = 0;
@@ -329,9 +325,7 @@ void ProcessY_IRQ() {
 
 void ProcessScrollIRQ()
 {
-#if DEF_DEBUG_PRINTF
-    DUG_PRINTF("MOUSE Process scroll IRQ!\r\n");
-#endif
+
     uint8_t code = 0;
     uint16_t PortCurrentValue = GPIO_ReadOutputData(GPIOB);
 

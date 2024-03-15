@@ -211,6 +211,7 @@ int parse_report_descriptor(uint8_t *rep, uint16_t rep_size,hid_report_t *conf) 
            	         conf->joystick_mouse.wheel.logical.min = logical_minimum;
            	         conf->joystick_mouse.wheel.logical.max = logical_maximum;
            	         conf->joystick_mouse.wheel.size = report_size;
+           	         wheel = -1;
            	     }
 
 
@@ -341,19 +342,28 @@ int parse_report_descriptor(uint8_t *rep, uint16_t rep_size,hid_report_t *conf) 
            	// local item
            	switch(tag) {
            	case 0:
+
            	  // we only support mice, keyboards and joysticks
            	  if( !collection_depth && (value == USAGE_KEYBOARD)) {
            	    // usage(keyboard) is always allowed
            	    conf->type = REPORT_TYPE_KEYBOARD;
-           	  } else if(!collection_depth && (value == USAGE_MOUSE)) {
+           	  }
+
+           	  else if(!collection_depth && (value == USAGE_MOUSE)) {
            	    // usage(mouse) is always allowed
            	    conf->type = REPORT_TYPE_MOUSE;
-           	  } else if(!collection_depth &&
+           	  }
+
+           	  else if(!collection_depth &&
            		    ((value == USAGE_GAMEPAD) || (value == USAGE_JOYSTICK))) {
            	    conf->type = REPORT_TYPE_JOYSTICK;
-           	  } else if(value == USAGE_POINTER && app_collection) {
+           	  }
+
+           	  else if(value == USAGE_POINTER && app_collection) {
            	    // usage(pointer) is allowed within the application collection
-           	  } else if((value == USAGE_X || value == USAGE_Y) && app_collection) {
+           	  }
+
+           	  else if((value == USAGE_X || value == USAGE_Y) && app_collection) {
            	    // usage(x) and usage(y) are allowed within the app collection
            	   // hidp_extreme_debugf(" -> axis usage");
 
@@ -366,7 +376,9 @@ int parse_report_descriptor(uint8_t *rep, uint16_t rep_size,hid_report_t *conf) 
            		axis[1] = usage_count;
            	      }
            	    }
-           	  } else if((value == USAGE_HAT) && app_collection) {
+           	  }
+
+           	  else if((value == USAGE_HAT) && app_collection) {
            	    // usage(hat) is allowed within the app collection
            	    // we support hat on joysticks only
            	    if(conf->type == REPORT_TYPE_JOYSTICK) {
@@ -375,19 +387,14 @@ int parse_report_descriptor(uint8_t *rep, uint16_t rep_size,hid_report_t *conf) 
            	    }
            	  }
 
-           	else if((value == USAGE_WHEEL) && app_collection) {
+           	  else if((value== USAGE_WHEEL) && app_collection) {
            	                // usage(wheel) is allowed within the app collection
-
            	                if(conf->type == REPORT_TYPE_MOUSE) {
            	                 // hidp_extreme_debugf("JOYSTICK: found hat @ %d", usage_count);
            	                  wheel = usage_count;
            	                }
            	              }
 
-
-           	  else {
-
-           	  }
 
            	  usage_count++;
            	  break;
